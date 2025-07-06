@@ -335,7 +335,6 @@ a:hover {
 /* Main Content */
 .main-content {
     flex: 1;
-    padding: 3rem 0;
     animation: fadeIn var(--transition-slow) ease-out;
 }
 
