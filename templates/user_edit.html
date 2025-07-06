@@ -1,0 +1,136 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="md:flex md:items-center md:justify-between mb-8">
+            <div class="flex-1 min-w-0">
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Edit User</h1>
+                <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                    Update user account information
+                </p>
+            </div>
+            <div class="mt-4 flex md:mt-0 md:ml-4">
+                <a href="/users" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    Back to Users
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+            <form method="POST" action="/users/edit/{{ edit_user.id }}">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Username
+                            </label>
+                            <input type="text" name="username" id="username" 
+                                   value="{{ edit_user.username }}"
+                                   {% if edit_user.username == "root" %}readonly{% endif %}
+                                   class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white {% if edit_user.username == 'root' %}bg-gray-100 dark:bg-gray-600 cursor-not-allowed{% endif %}">
+                            {% if edit_user.username == "root" %}
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Root username cannot be changed</p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Email
+                            </label>
+                            <input type="email" name="email" id="email" 
+                                   value="{{ edit_user.email }}"
+                                   required
+                                   class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                        </div>
+
+                        <div>
+                            <label for="full_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Full Name
+                            </label>
+                            <input type="text" name="full_name" id="full_name" 
+                                   value="{{ edit_user.full_name or '' }}"
+                                   class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                        </div>
+
+                        <div>
+                            <label for="new_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                New Password
+                            </label>
+                            <input type="password" name="new_password" id="new_password" 
+                                   placeholder="Leave blank to keep current password"
+                                   class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white">
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <fieldset>
+                                <legend class="text-base font-medium text-gray-900 dark:text-white">User Status</legend>
+                                <div class="mt-4 space-y-4">
+                                    <div class="flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input id="is_active" name="is_active" type="checkbox" 
+                                                   {% if edit_user.is_active %}checked{% endif %}
+                                                   class="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded">
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label for="is_active" class="font-medium text-gray-700 dark:text-gray-300">Active</label>
+                                            <p class="text-gray-500 dark:text-gray-400">User can log in and access the system</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input id="is_superuser" name="is_superuser" type="checkbox" 
+                                                   {% if edit_user.is_superuser %}checked{% endif %}
+                                                   {% if edit_user.username == "root" %}disabled{% endif %}
+                                                   class="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded {% if edit_user.username == 'root' %}cursor-not-allowed opacity-50{% endif %}">
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label for="is_superuser" class="font-medium text-gray-700 dark:text-gray-300">Administrator</label>
+                                            <p class="text-gray-500 dark:text-gray-400">Has full system access and can manage other users</p>
+                                            {% if edit_user.username == "root" %}
+                                                <p class="text-sm text-amber-600 dark:text-amber-400 mt-1">Root user must remain an administrator</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-4 py-3 bg-gray-50 dark:bg-gray-700 text-right sm:px-6">
+                    <button type="submit" 
+                            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- User Info Card -->
+        <div class="mt-8 bg-white dark:bg-gray-800 shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                    User Information
+                </h3>
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">User ID</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ edit_user.id }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Created At</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ edit_user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</dd>
+                    </div>
+                    {% if edit_user.updated_at %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ edit_user.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

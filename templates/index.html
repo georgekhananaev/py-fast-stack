@@ -1,0 +1,99 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="bg-gradient-to-br from-primary-600 to-primary-800 dark:from-primary-700 dark:to-primary-900">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+        <h1 class="text-4xl md:text-6xl font-bold text-white mb-6">
+            Welcome to PyFastStack
+        </h1>
+        <p class="text-xl md:text-2xl text-primary-100 mb-8 max-w-3xl mx-auto">
+            A modern, async Python web application template with authentication
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/register" class="bg-white text-primary-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-semibold text-lg transition-colors">
+                Get Started
+            </a>
+            <a href="/api/v1/docs" class="border-2 border-white text-white hover:bg-white hover:text-primary-600 px-8 py-3 rounded-lg font-semibold text-lg transition-colors">
+                API Documentation
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="py-16 bg-white dark:bg-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold text-center mb-12 text-gray-900 dark:text-white">Features</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- Feature 1 -->
+            <div class="text-center p-6 rounded-lg hover:shadow-lg transition-shadow bg-gray-50 dark:bg-gray-700">
+                <div class="w-16 h-16 mx-auto mb-4 text-primary-600 dark:text-primary-400">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Lightning Fast</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Built with FastAPI and async Python for maximum performance and concurrent request handling.
+                </p>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="text-center p-6 rounded-lg hover:shadow-lg transition-shadow bg-gray-50 dark:bg-gray-700">
+                <div class="w-16 h-16 mx-auto mb-4 text-primary-600 dark:text-primary-400">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Scalable Architecture</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Modular design with clean separation of concerns, ready to scale with your needs.
+                </p>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="text-center p-6 rounded-lg hover:shadow-lg transition-shadow bg-gray-50 dark:bg-gray-700">
+                <div class="w-16 h-16 mx-auto mb-4 text-primary-600 dark:text-primary-400">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Secure by Default</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    JWT authentication, password hashing, and CORS protection built-in from the start.
+                </p>
+            </div>
+
+            <!-- Feature 4 -->
+            <div class="text-center p-6 rounded-lg hover:shadow-lg transition-shadow bg-gray-50 dark:bg-gray-700">
+                <div class="w-16 h-16 mx-auto mb-4 text-primary-600 dark:text-primary-400">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Developer Friendly</h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                    Auto-generated API docs, type safety with Pydantic, and clean code structure.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div class="bg-gray-900 dark:bg-black py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl font-bold text-white mb-4">Ready to get started?</h2>
+        <p class="text-xl text-gray-300 mb-8">
+            Join thousands of developers building scalable applications with PyFastStack.
+        </p>
+        <a href="/register" class="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-lg font-semibold text-lg transition-colors inline-block">
+            Create Account
+        </a>
+    </div>
+</div>
+{% endblock %}

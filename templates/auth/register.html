@@ -1,0 +1,166 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
+                Create Account
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+                Join PyFastStack to get started
+            </p>
+        </div>
+        <form class="mt-8 space-y-6" method="POST" action="/register" id="registerForm">
+            <div class="space-y-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Email Address
+                    </label>
+                    <input id="email" name="email" type="email" autocomplete="email" required 
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                           placeholder="you@example.com">
+                    <span class="text-red-500 text-xs mt-1" id="emailError"></span>
+                </div>
+
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Username
+                    </label>
+                    <input id="username" name="username" type="text" autocomplete="username" required 
+                           minlength="3" maxlength="50"
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                           placeholder="Choose a username">
+                    <span class="text-red-500 text-xs mt-1" id="usernameError"></span>
+                </div>
+
+                <div>
+                    <label for="full_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Full Name (Optional)
+                    </label>
+                    <input id="full_name" name="full_name" type="text" autocomplete="name"
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                           placeholder="John Doe">
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Password
+                    </label>
+                    <input id="password" name="password" type="password" autocomplete="new-password" required 
+                           minlength="8"
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                           placeholder="Create a strong password">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">At least 8 characters</p>
+                    <div id="password-strength" class="mt-1"></div>
+                    <span class="text-red-500 text-xs mt-1" id="passwordError"></span>
+                </div>
+
+                <div>
+                    <label for="confirm_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Confirm Password
+                    </label>
+                    <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required 
+                           minlength="8"
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                           placeholder="Confirm your password">
+                    <span class="text-red-500 text-xs mt-1" id="confirmError"></span>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit" 
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-primary-500 group-hover:text-primary-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                        </svg>
+                    </span>
+                    Create Account
+                </button>
+            </div>
+
+            <div class="text-center">
+                <span class="text-sm text-gray-600 dark:text-gray-400">
+                    Already have an account?
+                </span>
+                <a href="/login" class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 ml-1">
+                    Sign in
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const form = document.getElementById('registerForm');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    const confirmError = document.getElementById('confirmError');
+    const passwordStrengthDiv = document.getElementById('password-strength');
+    
+    // Password strength indicator
+    function getPasswordStrength(password) {
+        let strength = 0;
+        if (password.length >= 8) strength++;
+        if (password.length >= 12) strength++;
+        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+        if (/\d/.test(password)) strength++;
+        if (/[^a-zA-Z\d]/.test(password)) strength++;
+        return strength;
+    }
+    
+    function updatePasswordStrength(password) {
+        const strength = getPasswordStrength(password);
+        const strengthText = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
+        const strengthColors = [
+            'bg-red-500',
+            'bg-orange-500',
+            'bg-yellow-500',
+            'bg-blue-500',
+            'bg-green-500'
+        ];
+        
+        passwordStrengthDiv.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full ${strengthColors[strength]} transition-all duration-300" 
+                         style="width: ${(strength + 1) * 20}%"></div>
+                </div>
+                <span class="text-xs font-medium ${strengthColors[strength].replace('bg-', 'text-')}">${strengthText[strength]}</span>
+            </div>
+        `;
+    }
+    
+    password.addEventListener('input', function() {
+        updatePasswordStrength(this.value);
+    });
+    
+    // Password match validation
+    function validatePasswords() {
+        if (password.value !== confirmPassword.value) {
+            confirmError.textContent = 'Passwords do not match';
+            return false;
+        } else {
+            confirmError.textContent = '';
+            return true;
+        }
+    }
+    
+    confirmPassword.addEventListener('input', validatePasswords);
+    
+    form.addEventListener('submit', function(e) {
+        if (!validatePasswords()) {
+            e.preventDefault();
+            return;
+        }
+        
+        const button = this.querySelector('button[type="submit"]');
+        button.textContent = 'Creating account...';
+        button.disabled = true;
+        button.classList.add('opacity-75');
+    });
+</script>
+{% endblock %}

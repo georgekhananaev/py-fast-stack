@@ -1,0 +1,263 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+
+# uv
+.uv/
+uv.lock
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+pyfaststack.db
+test.db
+instance/
+data/
+
+# Logs
+logs/
+*.log
+*.log.*
+access.log
+error.log
+server.log
+gunicorn.log
+uvicorn.log
+nohup.out
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.claude/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+.~*
+*.temp
+*.cache
+*.pid
+*.sock
+*.socket
+tmp/
+temp/
+cache/
+
+# Production
+*.pid
+gunicorn.pid
+uvicorn.pid
+
+# Credentials and sensitive files
+admin_credentials.txt
+credentials.txt
+*.pem
+*.key
+*.crt
+*.cert
+secrets/
+
+# Session files
+sessions/
+*.session
+
+# Upload files
+uploads/
+media/
+static/uploads/
+
+# Backup files
+*.backup
+*.dump
+*.sql
+backups/
+
+# Performance and monitoring
+*.prof
+*.stats
+profile_output/
+.benchmarks/
+
+# Lock files (keep only necessary ones)
+*.lock
+!poetry.lock
+!package-lock.json
+!yarn.lock
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.project
+.pydevproject
+.settings/
+
+# Python specific
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.ruff_cache/
+.pytype/
+cython_debug/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+virtualenv/
+
+# Package managers
+.uv/
+# Keep uv.lock for reproducible builds
+# uv.lock
+node_modules/
+.npm/
+.yarn/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+PIPFILE.lock
+
+# Documentation
+docs/_build/
+site/
+
+# Testing
+htmlcov/
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Environment variables
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Docker
+*.dockerignore
+docker-compose.override.yml
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Monitoring
+.monitoring/
+metrics/
+
+# Custom
+
+# Utility scripts (optional - remove if you want to keep them)
+# clean.py
+# load_test.py
