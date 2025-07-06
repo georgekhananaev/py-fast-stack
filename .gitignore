@@ -257,6 +257,7 @@ docker-compose.override.yml
 metrics/
 
 # Custom
+test_ui.html
 
 # Utility scripts (optional - remove if you want to keep them)
 # clean.py

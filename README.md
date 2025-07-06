@@ -96,6 +96,14 @@ pyfaststack/
 uv run python run.py
 # Or if uv environment is activated:
 python run.py
+
+# The application automatically runs with auto-reload when DEBUG=True in .env
+# This uses Gunicorn with reload enabled for development
+
+# Alternatively, run Uvicorn directly for development:
+uv run uvicorn app.main:app --reload
+# Or if uv environment is activated:
+uvicorn app.main:app --reload
 ```
 
 On first run, the application will:
