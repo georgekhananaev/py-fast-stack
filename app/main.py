@@ -6,14 +6,21 @@ https://george.khananaev.com/
 
 from contextlib import asynccontextmanager
 from datetime import datetime
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.api.v1.api import api_router
 from app.core.config import get_settings
 from app.core.middleware import RequestSizeLimitMiddleware, PerformanceMiddleware
+from app.core.errors import (
+    general_http_exception_handler,
+    internal_server_error_handler,
+    not_found_handler,
+    forbidden_handler
+)
 from app.db.session import engine
 from app.db.base import Base
 from app.web import web_router
@@ -69,7 +76,12 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(web_router)
 
-
+# Add error handlers
+app.add_exception_handler(StarletteHTTPException, general_http_exception_handler)
+app.add_exception_handler(404, not_found_handler)
+app.add_exception_handler(403, forbidden_handler)
+app.add_exception_handler(500, internal_server_error_handler)
+app.add_exception_handler(Exception, internal_server_error_handler)
 
 
 @app.get("/health")
