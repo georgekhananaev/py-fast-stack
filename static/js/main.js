@@ -206,6 +206,11 @@ function initForms() {
     // Form submission loading states
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
+        // Skip subscription forms
+        if (form.id === 'subscriptionForm' || form.id === 'quickSubscribeForm') {
+            return;
+        }
+        
         form.addEventListener('submit', function(e) {
             const submitBtn = this.querySelector('button[type="submit"]');
             if (submitBtn && !submitBtn.disabled) {

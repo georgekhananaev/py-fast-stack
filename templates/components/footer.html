@@ -80,9 +80,9 @@
                     <p class="text-sm">Get the latest updates on new features and releases.</p>
                 </div>
                 <div>
-                    <form class="flex gap-2">
-                        <input type="email" placeholder="Enter your email" class="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
-                        <button type="submit" class="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors">
+                    <form id="quickSubscribeForm" class="flex gap-2" onsubmit="handleQuickSubscribe(event)">
+                        <input type="email" id="quickEmail" placeholder="Enter your email" class="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
+                        <button type="submit" class="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white hover:text-white font-medium rounded-lg transition-colors">
                             Subscribe
                         </button>
                     </form>
@@ -111,3 +111,15 @@
         </div>
     </div>
 </footer>
+
+<script>
+function handleQuickSubscribe(event) {
+    event.preventDefault();
+    const email = document.getElementById('quickEmail').value;
+    if (email) {
+        openSubscriptionModal(email);
+    } else {
+        openSubscriptionModal();
+    }
+}
+</script>
