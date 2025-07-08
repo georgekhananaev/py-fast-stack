@@ -24,7 +24,7 @@ class CRUDSubscription(CRUDBase[Subscription, SubscriptionCreate, SubscriptionUp
             .limit(limit)
             .order_by(Subscription.created_at.desc())
         )
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def deactivate_subscription(self, db: AsyncSession, *, email: str) -> Subscription | None:
         """Deactivate a subscription by email."""
@@ -75,7 +75,7 @@ class CRUDSubscription(CRUDBase[Subscription, SubscriptionCreate, SubscriptionUp
         # Get paginated results
         query = query.offset(skip).limit(limit)
         result = await db.execute(query)
-        subscriptions = result.scalars().all()
+        subscriptions = list(result.scalars().all())
 
         return subscriptions, total
 

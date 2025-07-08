@@ -79,7 +79,7 @@ async def users_list(
     total_pages = (total + limit - 1) // limit
 
     # Helper functions for template
-    def sort_url(column):
+    def sort_url(column: str) -> str:
         """Generate URL for sorting by a column."""
         new_order = "desc" if sort_by == column and sort_order == "asc" else "asc"
         params = []
@@ -90,7 +90,7 @@ async def users_list(
         params.append("page=1")  # Reset to first page when sorting
         return f"/users?{'&'.join(params)}"
 
-    def pagination_url(page_num):
+    def pagination_url(page_num: int) -> str:
         """Generate URL for a specific page."""
         params = []
         if search:
@@ -385,7 +385,7 @@ async def subscribers_list(
     total_pages = (total + limit - 1) // limit
 
     # Helper functions for template
-    def sort_url(column):
+    def sort_url(column: str) -> str:
         """Generate URL for sorting by a column."""
         new_order = "desc" if sort_by == column and sort_order == "asc" else "asc"
         params = []
@@ -396,7 +396,7 @@ async def subscribers_list(
         params.append("page=1")  # Reset to first page when sorting
         return f"/subscribers?{'&'.join(params)}"
 
-    def pagination_url(page_num):
+    def pagination_url(page_num: int) -> str:
         """Generate URL for a specific page."""
         params = []
         if search:

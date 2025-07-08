@@ -42,7 +42,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
-            update_data = obj_in.dict(exclude_unset=True)
+            update_data = obj_in.model_dump(exclude_unset=True)
 
         # Hash password if it's being updated
         if "password" in update_data and update_data["password"]:
@@ -112,7 +112,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         # Get paginated results
         query = query.offset(skip).limit(limit)
         result = await db.execute(query)
-        users = result.scalars().all()
+        users = list(result.scalars().all())
 
         return users, total
 

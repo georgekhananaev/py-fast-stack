@@ -5,7 +5,8 @@ https://george.khananaev.com/
 """
 
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
+from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,7 +32,7 @@ settings = get_settings()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Handle application lifespan events."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -123,6 +124,6 @@ async def health():
     """
     return {
         "status": "healthy",
-        "datetime": datetime.utcnow().isoformat(),
-        "timestamp": datetime.utcnow().timestamp()
+        "datetime": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(timezone.utc).timestamp()
     }

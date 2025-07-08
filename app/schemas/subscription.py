@@ -1,14 +1,14 @@
 import json
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 
 
 class InterestsValidatorMixin:
     """Mixin for handling interests field validation."""
 
-    @validator('interests')
-    def validate_interests(cls, v):
+    @field_validator('interests')
+    def validate_interests(cls, v) -> str | None:
         """Convert interests list to JSON string for storage."""
         if v is None:
             return None
@@ -43,11 +43,10 @@ class SubscriptionInDB(SubscriptionBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
-    @validator('interests', pre=True)
-    def parse_interests(cls, v):
+    @field_validator('interests', mode='before')
+    def parse_interests(cls, v) -> list[str] | None:
         """Parse interests JSON string back to list."""
         if v is None or v == "":
             return None
