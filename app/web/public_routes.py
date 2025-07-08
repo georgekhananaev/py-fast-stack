@@ -12,9 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.security import create_access_token
+from app.core.auth_dependencies import get_optional_current_user
 from app.crud import user as crud_user
 from app.db.session import get_db
 from app.schemas.user import UserCreate
+from app.models.user import User
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -22,7 +24,10 @@ settings = get_settings()
 
 
 @router.get("/", response_class=HTMLResponse)
-async def home(request: Request):
+async def home(
+    request: Request,
+    current_user: User | None = Depends(get_optional_current_user)
+):
     """
     Home page - Public endpoint.
     
@@ -36,26 +41,34 @@ async def home(request: Request):
     """
     return templates.TemplateResponse(
         "index.html",
-        {"request": request, "title": "Home"}
+        {"request": request, "title": "Home", "user": current_user}
     )
 
 
 @router.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
+async def login_page(
+    request: Request,
+    current_user: User | None = Depends(get_optional_current_user)
+):
     """
     Login page - Public endpoint.
     
     Displays the login form for users to authenticate.
+    If user is already logged in, redirect to dashboard.
     
     Authentication required: NO
     Token type: None
     
     Returns:
-        HTMLResponse: The login page template
+        HTMLResponse: The login page template or redirect to dashboard
     """
+    # If user is already logged in, redirect to dashboard
+    if current_user:
+        return RedirectResponse(url="/dashboard", status_code=302)
+    
     return templates.TemplateResponse(
         "auth/login.html",
-        {"request": request, "title": "Login"}
+        {"request": request, "title": "Login", "user": current_user}
     )
 
 
@@ -118,21 +131,29 @@ async def login(
 
 
 @router.get("/register", response_class=HTMLResponse)
-async def register_page(request: Request):
+async def register_page(
+    request: Request,
+    current_user: User | None = Depends(get_optional_current_user)
+):
     """
     Registration page - Public endpoint.
     
     Displays the registration form for new users.
+    If user is already logged in, redirect to dashboard.
     
     Authentication required: NO
     Token type: None
     
     Returns:
-        HTMLResponse: The registration page template
+        HTMLResponse: The registration page template or redirect to dashboard
     """
+    # If user is already logged in, redirect to dashboard
+    if current_user:
+        return RedirectResponse(url="/dashboard", status_code=302)
+    
     return templates.TemplateResponse(
         "auth/register.html",
-        {"request": request, "title": "Register"}
+        {"request": request, "title": "Register", "user": current_user}
     )
 
 

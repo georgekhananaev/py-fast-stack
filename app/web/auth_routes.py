@@ -9,29 +9,13 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import verify_password, verify_token
+from app.core.auth_dependencies import get_current_user_from_cookie
 from app.crud import user as crud_user
 from app.db.session import get_db
 from app.schemas.user import UserUpdate
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
-
-
-async def get_current_user_from_cookie(request: Request, db: AsyncSession):
-    """Get current user from access token in cookie."""
-    token = request.cookies.get("access_token")
-    if not token:
-        return None
-
-    username = verify_token(token)
-    if not username:
-        return None
-
-    user = await crud_user.get_by_username(db, username=username)
-    if not user or not user.is_active:
-        return None
-
-    return user
 
 
 # Authentication is handled manually in each endpoint to properly handle redirects
