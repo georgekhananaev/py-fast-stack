@@ -1,9 +1,9 @@
-from app.schemas.user import User, UserCreate, UserUpdate, UserInDB
 from app.schemas.token import Token, TokenData
+from app.schemas.user import User, UserCreate, UserInDB, UserUpdate
 
 __all__ = [
     "User",
-    "UserCreate", 
+    "UserCreate",
     "UserUpdate",
     "UserInDB",
     "Token",

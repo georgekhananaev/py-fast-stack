@@ -1,11 +1,12 @@
-from typing import List
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.api.deps import get_db, get_current_active_superuser
+
+from app.api.deps import get_current_active_superuser, get_db
 from app.crud import subscription as crud_subscription
-from app.schemas.subscription import Subscription, SubscriptionCreate
 from app.models.user import User
-import logging
+from app.schemas.subscription import Subscription, SubscriptionCreate
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ async def subscribe_to_newsletter(
         existing_subscription = await crud_subscription.subscription.get_by_email(
             db, email=subscription_in.email
         )
-        
+
         if existing_subscription:
             if existing_subscription.is_active:
                 raise HTTPException(
@@ -61,12 +62,12 @@ async def subscribe_to_newsletter(
                 )
                 logger.info(f"Reactivated subscription for email: {subscription_in.email}")
                 return subscription
-        
+
         # Create new subscription
         subscription = await crud_subscription.subscription.create(db, obj_in=subscription_in)
         logger.info(f"New subscription created for email: {subscription_in.email}")
         return subscription
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -102,16 +103,16 @@ async def unsubscribe_from_newsletter(
     """
     try:
         subscription = await crud_subscription.subscription.deactivate_subscription(db, email=email)
-        
+
         if not subscription:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Email not found in our subscription list"
             )
-        
+
         logger.info(f"Unsubscribed email: {email}")
         return {"detail": "Successfully unsubscribed from newsletter"}
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -122,7 +123,7 @@ async def unsubscribe_from_newsletter(
         )
 
 
-@router.get("/subscriptions", response_model=List[Subscription])
+@router.get("/subscriptions", response_model=list[Subscription])
 async def get_active_subscriptions(
     skip: int = 0,
     limit: int = 100,

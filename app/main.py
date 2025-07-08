@@ -6,24 +6,26 @@ https://george.khananaev.com/
 
 from contextlib import asynccontextmanager
 from datetime import datetime
-from fastapi import FastAPI, HTTPException
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from starlette.middleware.trustedhost import TrustedHostMiddleware
-from starlette.middleware.gzip import GZipMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.gzip import GZipMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+
 from app.api.v1.api import api_router
 from app.core.config import get_settings
-from app.core.middleware import RequestSizeLimitMiddleware, PerformanceMiddleware
 from app.core.errors import (
+    forbidden_handler,
     general_http_exception_handler,
     internal_server_error_handler,
     not_found_handler,
-    forbidden_handler
 )
-from app.db.session import engine
+from app.core.middleware import PerformanceMiddleware, RequestSizeLimitMiddleware
 from app.db.base import Base
-from app.web import public_router, auth_router, admin_router
+from app.db.session import engine
+from app.web import admin_router, auth_router, public_router
 
 settings = get_settings()
 
@@ -94,7 +96,7 @@ app.include_router(api_router, prefix="/api/v1")
 
 # Web routers - grouped by access level
 app.include_router(public_router, tags=["🌐 Public Pages"])
-app.include_router(auth_router, tags=["👤 User Account"])  
+app.include_router(auth_router, tags=["👤 User Account"])
 app.include_router(admin_router, tags=["🛡️ Admin Panel"])
 
 # Add error handlers - they will check request path and handle accordingly

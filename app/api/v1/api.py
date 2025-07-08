@@ -7,7 +7,8 @@ Routes are organized by functionality and access level:
 - Subscription routes: Mix of public (subscribe/unsubscribe) and protected (list)
 """
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, users, subscriptions
+
+from app.api.v1.endpoints import auth, subscriptions, users
 
 api_router = APIRouter()
 
@@ -17,8 +18,8 @@ api_router = APIRouter()
 # POST /auth/register - Create new account
 # GET /auth/me - Get current user (requires auth)
 api_router.include_router(
-    auth.router, 
-    prefix="/auth", 
+    auth.router,
+    prefix="/auth",
     tags=["🔓 Public - Authentication"]
 )
 
@@ -28,8 +29,8 @@ api_router.include_router(
 # GET /users/{id} - Get user details (own profile or superuser)
 # PUT /users/{id} - Update user (superuser only)
 api_router.include_router(
-    users.router, 
-    prefix="/users", 
+    users.router,
+    prefix="/users",
     tags=["🔒 Admin - User Management"]
 )
 
@@ -39,6 +40,6 @@ api_router.include_router(
 # DELETE /unsubscribe/{email} - Unsubscribe (public)
 # GET /subscriptions - List all subscribers (superuser only)
 api_router.include_router(
-    subscriptions.router, 
+    subscriptions.router,
     tags=["📧 Newsletter Management"]
 )

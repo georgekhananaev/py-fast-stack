@@ -3,16 +3,16 @@ Admin routes - Requires superuser privileges.
 
 These routes are only accessible to users with superuser/admin status.
 """
-from fastapi import APIRouter, Request, Depends, Form, status, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.session import get_db
-from app.crud import user as crud_user
-from app.crud import subscription as crud_subscription
-from app.schemas.user import UserUpdate
+
 from app.core.security import verify_token
-from app.models.user import User
+from app.crud import subscription as crud_subscription
+from app.crud import user as crud_user
+from app.db.session import get_db
+from app.schemas.user import UserUpdate
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -55,29 +55,29 @@ async def users_list(
     """
     # Manual authentication check
     from app.core.auth_dependencies import get_current_user_from_cookie
-    
+
     current_user = await get_current_user_from_cookie(request, db)
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
     if not current_user.is_superuser:
         return RedirectResponse(url="/dashboard", status_code=303)
-    
+
     # Calculate skip
     skip = (page - 1) * limit
-    
+
     # Get users with pagination
     users, total = await crud_user.get_multi_with_pagination(
-        db, 
-        skip=skip, 
+        db,
+        skip=skip,
         limit=limit,
         search=search,
         sort_by=sort_by,
         sort_order=sort_order
     )
-    
+
     # Calculate pagination info
     total_pages = (total + limit - 1) // limit
-    
+
     # Helper functions for template
     def sort_url(column):
         """Generate URL for sorting by a column."""
@@ -87,9 +87,9 @@ async def users_list(
             params.append(f"search={search}")
         params.append(f"sort_by={column}")
         params.append(f"sort_order={new_order}")
-        params.append(f"page=1")  # Reset to first page when sorting
+        params.append("page=1")  # Reset to first page when sorting
         return f"/users?{'&'.join(params)}"
-    
+
     def pagination_url(page_num):
         """Generate URL for a specific page."""
         params = []
@@ -101,7 +101,7 @@ async def users_list(
             params.append(f"sort_order={sort_order}")
         params.append(f"page={page_num}")
         return f"/users?{'&'.join(params)}"
-    
+
     return templates.TemplateResponse(
         "users.html",
         {
@@ -155,18 +155,18 @@ async def edit_user_form(
     """
     # Manual authentication check
     from app.core.auth_dependencies import get_current_user_from_cookie
-    
+
     current_user = await get_current_user_from_cookie(request, db)
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
     if not current_user.is_superuser:
         return RedirectResponse(url="/dashboard", status_code=303)
-    
+
     # Get user to edit
     edit_user = await crud_user.get(db, id=user_id)
     if not edit_user:
         return RedirectResponse(url="/users", status_code=status.HTTP_302_FOUND)
-    
+
     return templates.TemplateResponse(
         "user_edit.html",
         {
@@ -210,13 +210,13 @@ async def update_user(
     """
     # Manual authentication check
     from app.core.auth_dependencies import get_current_user_from_cookie
-    
+
     current_user = await get_current_user_from_cookie(request, db)
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
     if not current_user.is_superuser:
         return RedirectResponse(url="/dashboard", status_code=303)
-    
+
     # Get form data
     form_data = await request.form()
     username = form_data.get("username")
@@ -225,19 +225,19 @@ async def update_user(
     new_password = form_data.get("new_password")
     is_active = "is_active" in form_data
     is_superuser = "is_superuser" in form_data
-    
+
     # Get user to update
     user_to_update = await crud_user.get(db, id=user_id)
     if not user_to_update:
         return RedirectResponse(url="/users", status_code=status.HTTP_302_FOUND)
-    
+
     # Prepare update data
     update_data = UserUpdate(
         email=email,
         full_name=full_name,
         is_active=is_active
     )
-    
+
     # Handle username change (except for root)
     if user_to_update.username != "root" and username != user_to_update.username:
         # Check if new username is already taken
@@ -248,18 +248,18 @@ async def update_user(
                 status_code=status.HTTP_302_FOUND
             )
         update_data.username = username
-    
+
     # Handle password change
     if new_password:
         update_data.password = new_password
-    
+
     # Handle superuser status (root must remain superuser)
     if user_to_update.username != "root":
         update_data.is_superuser = is_superuser
-    
+
     # Update the user
     await crud_user.update(db, db_obj=user_to_update, obj_in=update_data)
-    
+
     return RedirectResponse(
         url=f"/users/edit/{user_id}?success=User updated successfully",
         status_code=status.HTTP_302_FOUND
@@ -297,34 +297,34 @@ async def delete_user(
     token = request.cookies.get("access_token")
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    
+
     username = verify_token(token)
     if not username:
         raise HTTPException(status_code=401, detail="Invalid token")
-    
+
     current_user = await crud_user.get_by_username(db, username=username)
     if not current_user or not current_user.is_active:
         raise HTTPException(status_code=401, detail="User not active")
-    
+
     if not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+
     # Get user to delete
     user_to_delete = await crud_user.get(db, id=user_id)
     if not user_to_delete:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     # Prevent deletion of root user
     if user_to_delete.username == "root":
         raise HTTPException(status_code=403, detail="Cannot delete root user")
-    
+
     # Prevent self-deletion
     if user_to_delete.id == current_user.id:
         raise HTTPException(status_code=403, detail="Cannot delete your own account")
-    
+
     # Delete the user
     await crud_user.remove(db, id=user_id)
-    
+
     return {"detail": "User deleted successfully"}
 
 
@@ -361,29 +361,29 @@ async def subscribers_list(
     """
     # Manual authentication check
     from app.core.auth_dependencies import get_current_user_from_cookie
-    
+
     current_user = await get_current_user_from_cookie(request, db)
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
     if not current_user.is_superuser:
         return RedirectResponse(url="/dashboard", status_code=303)
-    
+
     # Calculate skip
     skip = (page - 1) * limit
-    
+
     # Get subscribers with pagination
-    subscribers, total = await crud_subscription.subscription.get_multi_with_pagination(
-        db, 
-        skip=skip, 
+    subscribers, total = await crud_subscription.get_multi_with_pagination(
+        db,
+        skip=skip,
         limit=limit,
         search=search,
         sort_by=sort_by,
         sort_order=sort_order
     )
-    
+
     # Calculate pagination info
     total_pages = (total + limit - 1) // limit
-    
+
     # Helper functions for template
     def sort_url(column):
         """Generate URL for sorting by a column."""
@@ -393,9 +393,9 @@ async def subscribers_list(
             params.append(f"search={search}")
         params.append(f"sort_by={column}")
         params.append(f"sort_order={new_order}")
-        params.append(f"page=1")  # Reset to first page when sorting
+        params.append("page=1")  # Reset to first page when sorting
         return f"/subscribers?{'&'.join(params)}"
-    
+
     def pagination_url(page_num):
         """Generate URL for a specific page."""
         params = []
@@ -407,7 +407,7 @@ async def subscribers_list(
             params.append(f"sort_order={sort_order}")
         params.append(f"page={page_num}")
         return f"/subscribers?{'&'.join(params)}"
-    
+
     return templates.TemplateResponse(
         "subscribers.html",
         {
@@ -460,24 +460,24 @@ async def delete_subscriber(
     token = request.cookies.get("access_token")
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    
+
     username = verify_token(token)
     if not username:
         raise HTTPException(status_code=401, detail="Invalid token")
-    
+
     current_user = await crud_user.get_by_username(db, username=username)
     if not current_user or not current_user.is_active:
         raise HTTPException(status_code=401, detail="User not active")
-    
+
     if not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+
     # Get subscriber to delete
     subscriber = await crud_subscription.subscription.get(db, id=subscriber_id)
     if not subscriber:
         raise HTTPException(status_code=404, detail="Subscriber not found")
-    
+
     # Delete the subscriber
     await crud_subscription.subscription.remove(db, id=subscriber_id)
-    
+
     return {"detail": "Subscriber deleted successfully"}

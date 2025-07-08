@@ -1,4 +1,4 @@
-from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -10,4 +10,4 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     """Token payload schema."""
-    username: Optional[str] = None
+    username: str | None = None

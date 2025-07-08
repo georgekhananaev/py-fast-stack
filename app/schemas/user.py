@@ -1,5 +1,5 @@
-from typing import Optional
 from datetime import datetime
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -7,7 +7,7 @@ class UserBase(BaseModel):
     """Base user schema."""
     email: EmailStr
     username: str = Field(..., min_length=3, max_length=50)
-    full_name: Optional[str] = None
+    full_name: str | None = None
     is_active: bool = True
     is_superuser: bool = False
 
@@ -19,20 +19,20 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     """Schema for updating a user."""
-    email: Optional[EmailStr] = None
-    username: Optional[str] = Field(None, min_length=3, max_length=50)
-    full_name: Optional[str] = None
-    password: Optional[str] = Field(None, min_length=8)
-    is_active: Optional[bool] = None
-    is_superuser: Optional[bool] = None
+    email: EmailStr | None = None
+    username: str | None = Field(None, min_length=3, max_length=50)
+    full_name: str | None = None
+    password: str | None = Field(None, min_length=8)
+    is_active: bool | None = None
+    is_superuser: bool | None = None
 
 
 class UserInDB(UserBase):
     """User schema with database fields."""
     id: int
     created_at: datetime
-    updated_at: Optional[datetime] = None
-    
+    updated_at: datetime | None = None
+
     class Config:
         from_attributes = True
 

@@ -1,8 +1,10 @@
 from datetime import timedelta
 from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api import deps
 from app.core.config import get_settings
 from app.core.security import create_access_token
@@ -49,7 +51,7 @@ async def login(
         )
     elif not crud_user.is_active(user):
         raise HTTPException(status_code=400, detail="Inactive user")
-    
+
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
@@ -87,14 +89,14 @@ async def register(
             status_code=400,
             detail="A user with this email already exists.",
         )
-    
+
     user = await crud_user.get_by_username(db, username=user_in.username)
     if user:
         raise HTTPException(
             status_code=400,
             detail="A user with this username already exists.",
         )
-    
+
     user = await crud_user.create(db, obj_in=user_in)
     return user
 

@@ -1,15 +1,11 @@
-from typing import Optional, List
-from pydantic import BaseModel, EmailStr, validator
-from datetime import datetime
 import json
+from datetime import datetime
+
+from pydantic import BaseModel, EmailStr, validator
 
 
-class SubscriptionBase(BaseModel):
-    """Base subscription schema."""
-    email: EmailStr
-    name: str
-    company: Optional[str] = None
-    interests: Optional[List[str]] = None
+class InterestsValidatorMixin:
+    """Mixin for handling interests field validation."""
 
     @validator('interests')
     def validate_interests(cls, v):
@@ -17,6 +13,14 @@ class SubscriptionBase(BaseModel):
         if v is None:
             return None
         return json.dumps(v)
+
+
+class SubscriptionBase(InterestsValidatorMixin, BaseModel):
+    """Base subscription schema."""
+    email: EmailStr
+    name: str
+    company: str | None = None
+    interests: list[str] | None = None
 
 
 class SubscriptionCreate(SubscriptionBase):
@@ -24,19 +28,12 @@ class SubscriptionCreate(SubscriptionBase):
     pass
 
 
-class SubscriptionUpdate(BaseModel):
+class SubscriptionUpdate(InterestsValidatorMixin, BaseModel):
     """Schema for updating a subscription."""
-    name: Optional[str] = None
-    company: Optional[str] = None
-    interests: Optional[List[str]] = None
-    is_active: Optional[bool] = None
-
-    @validator('interests')
-    def validate_interests(cls, v):
-        """Convert interests list to JSON string for storage."""
-        if v is None:
-            return None
-        return json.dumps(v)
+    name: str | None = None
+    company: str | None = None
+    interests: list[str] | None = None
+    is_active: bool | None = None
 
 
 class SubscriptionInDB(SubscriptionBase):

@@ -117,10 +117,48 @@ class TestAuthentication:
         assert "incorrect" in response.json()["detail"].lower()
     
     @pytest.mark.asyncio
-    async def test_login_inactive_user(self, client: AsyncClient):
+    async def test_login_inactive_user(self, client: AsyncClient, superuser_auth_headers: dict):
         """Test login with inactive user."""
-        # Skip this test as we can't create inactive users via API
-        pytest.skip("Cannot create inactive users via API")
+        # Create a test user first
+        timestamp = int(time.time() * 1000)
+        rand = random.randint(1000, 9999)
+        username = f"inactive_{timestamp}_{rand}"
+        email = f"inactive_{timestamp}_{rand}@example.com"
+        password = "inactivepass123"
+        
+        # Create user
+        response = await client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": email,
+                "username": username,
+                "password": password,
+                "full_name": "Inactive User"
+            }
+        )
+        assert response.status_code == 200
+        user_data = response.json()
+        
+        # Deactivate the user as superuser
+        response = await client.put(
+            f"/api/v1/users/{user_data['id']}",
+            headers=superuser_auth_headers,
+            json={
+                "is_active": False
+            }
+        )
+        assert response.status_code == 200
+        
+        # Try to login with inactive user
+        response = await client.post(
+            "/api/v1/auth/login",
+            data={
+                "username": username,
+                "password": password
+            }
+        )
+        assert response.status_code == 400
+        assert "Inactive user" in response.json()["detail"]
     
     @pytest.mark.asyncio
     async def test_get_current_user(self, client: AsyncClient, test_user: dict, auth_headers: dict):

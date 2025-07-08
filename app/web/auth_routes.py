@@ -3,15 +3,15 @@ Authenticated user routes - Requires login.
 
 These routes are accessible to any authenticated user (regular users).
 """
-from fastapi import APIRouter, Request, Depends, Form, status
+from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.session import get_db
+
+from app.core.security import verify_password, verify_token
 from app.crud import user as crud_user
+from app.db.session import get_db
 from app.schemas.user import UserUpdate
-from app.core.security import verify_token, verify_password
-from app.models.user import User
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -22,15 +22,15 @@ async def get_current_user_from_cookie(request: Request, db: AsyncSession):
     token = request.cookies.get("access_token")
     if not token:
         return None
-    
+
     username = verify_token(token)
     if not username:
         return None
-    
+
     user = await crud_user.get_by_username(db, username=username)
     if not user or not user.is_active:
         return None
-    
+
     return user
 
 
@@ -59,7 +59,7 @@ async def dashboard(
     current_user = await get_current_user_from_cookie(request, db)
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
-    
+
     return templates.TemplateResponse(
         "dashboard.html",
         {"request": request, "title": "Dashboard", "user": current_user}
@@ -94,12 +94,12 @@ async def profile(
     current_user = await get_current_user_from_cookie(request, db)
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
-    
+
     return templates.TemplateResponse(
         "profile.html",
         {
-            "request": request, 
-            "title": "Profile", 
+            "request": request,
+            "title": "Profile",
             "user": current_user,
             "success": success,
             "error": error
@@ -133,11 +133,11 @@ async def update_profile(
     current_user = await get_current_user_from_cookie(request, db)
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
-    
+
     # Update user
     user_update = UserUpdate(full_name=full_name)
     await crud_user.update(db, db_obj=current_user, obj_in=user_update)
-    
+
     # Redirect back to profile with success message
     return RedirectResponse(
         url="/profile?success=Profile updated successfully",
@@ -176,7 +176,7 @@ async def change_password(
     current_user = await get_current_user_from_cookie(request, db)
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
-    
+
     # Verify current password
     if not await verify_password(current_password, current_user.hashed_password):
         return templates.TemplateResponse(
@@ -184,7 +184,7 @@ async def change_password(
             {"request": request, "title": "Profile", "user": current_user, "error": "Current password is incorrect"},
             status_code=status.HTTP_400_BAD_REQUEST
         )
-    
+
     # Check if passwords match
     if new_password != confirm_new_password:
         return templates.TemplateResponse(
@@ -192,11 +192,11 @@ async def change_password(
             {"request": request, "title": "Profile", "user": current_user, "error": "New passwords do not match"},
             status_code=status.HTTP_400_BAD_REQUEST
         )
-    
+
     # Update password
     user_update = UserUpdate(password=new_password)
     await crud_user.update(db, db_obj=current_user, obj_in=user_update)
-    
+
     # Redirect back to profile with success message
     return RedirectResponse(
         url="/profile?success=Password changed successfully",

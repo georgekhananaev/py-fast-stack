@@ -3,16 +3,18 @@ Public web routes - No authentication required.
 
 These routes are accessible to everyone without any authentication.
 """
-from fastapi import APIRouter, Request, Depends, Form, status
+from datetime import timedelta
+
+from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.session import get_db
-from app.crud import user as crud_user
-from app.schemas.user import UserCreate
-from app.core.security import create_access_token
-from datetime import timedelta
+
 from app.core.config import get_settings
+from app.core.security import create_access_token
+from app.crud import user as crud_user
+from app.db.session import get_db
+from app.schemas.user import UserCreate
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -82,27 +84,27 @@ async def login(
         - On failure: Login page with error message
     """
     user = await crud_user.authenticate(db, username=username, password=password)
-    
+
     if not user:
         return templates.TemplateResponse(
             "auth/login.html",
             {"request": request, "title": "Login", "error": "Invalid username or password"},
             status_code=status.HTTP_401_UNAUTHORIZED
         )
-    
+
     if not user.is_active:
         return templates.TemplateResponse(
             "auth/login.html",
             {"request": request, "title": "Login", "error": "Inactive account"},
             status_code=status.HTTP_401_UNAUTHORIZED
         )
-    
+
     # Create access token
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    
+
     # Redirect to dashboard with token in cookie
     response = RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
     response.set_cookie(
@@ -170,7 +172,7 @@ async def register(
             {"request": request, "title": "Register", "error": "Email already registered"},
             status_code=status.HTTP_400_BAD_REQUEST
         )
-    
+
     existing_user = await crud_user.get_by_username(db, username=username)
     if existing_user:
         return templates.TemplateResponse(
@@ -178,7 +180,7 @@ async def register(
             {"request": request, "title": "Register", "error": "Username already taken"},
             status_code=status.HTTP_400_BAD_REQUEST
         )
-    
+
     # Create new user
     user_in = UserCreate(
         email=email,
@@ -186,15 +188,15 @@ async def register(
         password=password,
         full_name=full_name
     )
-    
+
     user = await crud_user.create(db, obj_in=user_in)
-    
+
     # Auto-login after registration
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    
+
     response = RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
     response.set_cookie(
         key="access_token",
