@@ -283,10 +283,13 @@ async def change_password(
 async def users_list(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    skip: int = 0,
-    limit: int = 100
+    page: int = 1,
+    limit: int = 10,
+    search: str = "",
+    sort_by: str = "id",
+    sort_order: str = "asc"
 ):
-    """Display users list (superuser only)."""
+    """Display users list (superuser only) with pagination, search, and sorting."""
     # Get token from cookie
     token = request.cookies.get("access_token")
     if not token:
@@ -305,8 +308,45 @@ async def users_list(
     if not user.is_superuser:
         return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
     
-    # Get all users
-    users = await crud_user.get_multi(db, skip=skip, limit=limit)
+    # Calculate skip
+    skip = (page - 1) * limit
+    
+    # Get users with pagination
+    users, total = await crud_user.get_multi_with_pagination(
+        db, 
+        skip=skip, 
+        limit=limit,
+        search=search,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
+    
+    # Calculate pagination info
+    total_pages = (total + limit - 1) // limit
+    
+    # Helper functions for template
+    def sort_url(column):
+        """Generate URL for sorting by a column."""
+        new_order = "desc" if sort_by == column and sort_order == "asc" else "asc"
+        params = []
+        if search:
+            params.append(f"search={search}")
+        params.append(f"sort_by={column}")
+        params.append(f"sort_order={new_order}")
+        params.append(f"page=1")  # Reset to first page when sorting
+        return f"/users?{'&'.join(params)}"
+    
+    def pagination_url(page_num):
+        """Generate URL for a specific page."""
+        params = []
+        if search:
+            params.append(f"search={search}")
+        if sort_by != "id":
+            params.append(f"sort_by={sort_by}")
+        if sort_order != "asc":
+            params.append(f"sort_order={sort_order}")
+        params.append(f"page={page_num}")
+        return f"/users?{'&'.join(params)}"
     
     return templates.TemplateResponse(
         "users.html",
@@ -314,7 +354,19 @@ async def users_list(
             "request": request,
             "title": "Users Management",
             "user": user,
-            "users": users
+            "users": users,
+            "current_page": page,
+            "total_pages": total_pages,
+            "total_users": total,
+            "limit": limit,
+            "search": search,
+            "sort_by": sort_by,
+            "sort_order": sort_order,
+            "sort_url": sort_url,
+            "pagination_url": pagination_url,
+            "min": min,
+            "max": max,
+            "range": range
         }
     )
 

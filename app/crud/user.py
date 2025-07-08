@@ -1,5 +1,5 @@
-from typing import Optional
-from sqlalchemy import select
+from typing import Optional, List, Tuple
+from sqlalchemy import select, func, or_, desc, asc
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud.base import CRUDBase
 from app.models.user import User
@@ -69,6 +69,51 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     def is_superuser(self, user: User) -> bool:
         """Check if user is superuser."""
         return user.is_superuser
+    
+    async def get_multi_with_pagination(
+        self,
+        db: AsyncSession,
+        *,
+        skip: int = 0,
+        limit: int = 10,
+        search: Optional[str] = None,
+        sort_by: str = "id",
+        sort_order: str = "asc"
+    ) -> Tuple[List[User], int]:
+        """Get users with pagination, search, and sorting."""
+        query = select(User)
+        
+        # Add search filter if provided
+        if search:
+            search_filter = or_(
+                User.username.ilike(f"%{search}%"),
+                User.email.ilike(f"%{search}%"),
+                User.full_name.ilike(f"%{search}%")
+            )
+            query = query.where(search_filter)
+        
+        # Add sorting
+        if sort_order == "desc":
+            order_column = desc(getattr(User, sort_by))
+        else:
+            order_column = asc(getattr(User, sort_by))
+        
+        query = query.order_by(order_column)
+        
+        # Get total count
+        count_query = select(func.count()).select_from(User)
+        if search:
+            count_query = count_query.where(search_filter)
+        
+        total_result = await db.execute(count_query)
+        total = total_result.scalar()
+        
+        # Get paginated results
+        query = query.offset(skip).limit(limit)
+        result = await db.execute(query)
+        users = result.scalars().all()
+        
+        return users, total
 
 
 user = CRUDUser(User)

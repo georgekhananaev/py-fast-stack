@@ -72,11 +72,14 @@ app.add_middleware(
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Include routers
+# Include routers - order matters!
+# API router first (with prefix) to avoid web routes catching API requests
 app.include_router(api_router, prefix="/api/v1")
+
+# Web router last (no prefix) as catch-all for non-API routes
 app.include_router(web_router)
 
-# Add error handlers
+# Add error handlers - they will check request path and handle accordingly
 app.add_exception_handler(StarletteHTTPException, general_http_exception_handler)
 app.add_exception_handler(404, not_found_handler)
 app.add_exception_handler(403, forbidden_handler)
