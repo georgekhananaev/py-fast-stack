@@ -23,7 +23,7 @@ from app.core.errors import (
 )
 from app.db.session import engine
 from app.db.base import Base
-from app.web import web_router
+from app.web import public_router, auth_router, admin_router
 
 settings = get_settings()
 
@@ -39,6 +39,22 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
+    description="""
+    ## PyFastStack API
+    
+    A modern Python web application with organized endpoints:
+    
+    - **🔓 Public - Authentication**: Login and registration endpoints
+    - **🔒 Admin - User Management**: User CRUD operations (superuser only)
+    - **📧 Newsletter Management**: Subscribe/unsubscribe and admin list view
+    - **🌐 Public Pages**: Home, login, register pages
+    - **👤 User Account**: Dashboard, profile management 
+    - **🛡️ Admin Panel**: User and subscriber management
+    
+    ### Authentication
+    - API endpoints use Bearer token authentication
+    - Web pages use cookie-based authentication
+    """,
     version=settings.app_version,
     lifespan=lifespan,
     # Increase limits for file uploads and request body size
@@ -76,8 +92,10 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # API router first (with prefix) to avoid web routes catching API requests
 app.include_router(api_router, prefix="/api/v1")
 
-# Web router last (no prefix) as catch-all for non-API routes
-app.include_router(web_router)
+# Web routers - grouped by access level
+app.include_router(public_router, tags=["🌐 Public Pages"])
+app.include_router(auth_router, tags=["👤 User Account"])  
+app.include_router(admin_router, tags=["🛡️ Admin Panel"])
 
 # Add error handlers - they will check request path and handle accordingly
 app.add_exception_handler(StarletteHTTPException, general_http_exception_handler)
@@ -89,10 +107,17 @@ app.add_exception_handler(Exception, internal_server_error_handler)
 
 @app.get("/health")
 async def health():
-    """Health check endpoint optimized for benchmarking.
+    """
+    Health check endpoint - Public endpoint.
     
     Returns minimal JSON with server status and current datetime.
     This endpoint is designed to have minimal overhead for accurate benchmarking.
+    
+    Authentication required: NO
+    Token type: None
+    
+    Returns:
+        JSON with status, datetime, and timestamp
     """
     return {
         "status": "healthy",

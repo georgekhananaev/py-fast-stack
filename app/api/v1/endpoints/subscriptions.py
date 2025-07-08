@@ -1,9 +1,10 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.api.deps import get_db
+from app.api.deps import get_db, get_current_active_superuser
 from app.crud import subscription as crud_subscription
 from app.schemas.subscription import Subscription, SubscriptionCreate
+from app.models.user import User
 import logging
 
 router = APIRouter()
@@ -16,7 +17,23 @@ async def subscribe_to_newsletter(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Subscribe to newsletter.
+    Subscribe to newsletter - Public endpoint.
+    
+    Allows anyone to subscribe to the newsletter.
+    If email already exists but is inactive, it will be reactivated.
+    
+    Authentication required: NO
+    Token type: None
+    
+    Args:
+        subscription_in: SubscriptionCreate with email, name, company, interests
+        
+    Returns:
+        Created/Updated Subscription object
+        
+    Raises:
+        400: Email is already subscribed to our newsletter
+        500: An error occurred while processing your subscription
     """
     try:
         # Check if email already exists
@@ -66,7 +83,22 @@ async def unsubscribe_from_newsletter(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Unsubscribe from newsletter.
+    Unsubscribe from newsletter - Public endpoint.
+    
+    Allows anyone to unsubscribe from the newsletter using their email.
+    
+    Authentication required: NO
+    Token type: None
+    
+    Args:
+        email: The email address to unsubscribe
+        
+    Returns:
+        Success message
+        
+    Raises:
+        404: Email not found in our subscription list
+        500: An error occurred while processing your unsubscription
     """
     try:
         subscription = await crud_subscription.subscription.deactivate_subscription(db, email=email)
@@ -94,10 +126,29 @@ async def unsubscribe_from_newsletter(
 async def get_active_subscriptions(
     skip: int = 0,
     limit: int = 100,
+    current_user: User = Depends(get_current_active_superuser),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Get all active subscriptions (admin only - you might want to add authentication).
+    Get all active subscriptions - Protected endpoint (Admin only).
+    
+    Returns a list of all active newsletter subscriptions.
+    
+    Authentication required: YES
+    Token type: Bearer token (in Authorization header)
+    Access level: SUPERUSER ONLY
+    
+    Args:
+        skip: Number of records to skip (for pagination)
+        limit: Maximum number of records to return (max 100)
+        
+    Returns:
+        List of Subscription objects
+        
+    Raises:
+        401: Not authenticated
+        403: Not a superuser
+        500: An error occurred while fetching subscriptions
     """
     try:
         subscriptions = await crud_subscription.subscription.get_active_subscriptions(

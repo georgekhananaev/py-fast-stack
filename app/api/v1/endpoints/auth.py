@@ -20,7 +20,24 @@ async def login(
     db: AsyncSession = Depends(get_db),
     form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
-    """OAuth2 compatible token login."""
+    """
+    OAuth2 compatible token login - Public endpoint.
+    
+    Authenticates user and returns an access token for API requests.
+    
+    Authentication required: NO (this IS the authentication endpoint)
+    Token type: None (returns Bearer token on success)
+    
+    Args:
+        form_data: OAuth2 form with username and password
+        
+    Returns:
+        Token object with access_token and token_type
+        
+    Raises:
+        401: Incorrect username or password
+        400: Inactive user account
+    """
     user = await crud_user.authenticate(
         db, username=form_data.username, password=form_data.password
     )
@@ -46,7 +63,24 @@ async def register(
     db: AsyncSession = Depends(get_db),
     user_in: UserCreate,
 ) -> Any:
-    """Register new user."""
+    """
+    Register a new user - Public endpoint.
+    
+    Creates a new user account via API.
+    
+    Authentication required: NO
+    Token type: None
+    
+    Args:
+        user_in: UserCreate schema with email, username, password, full_name
+        
+    Returns:
+        Created User object
+        
+    Raises:
+        400: A user with this email already exists
+        400: A user with this username already exists
+    """
     user = await crud_user.get_by_email(db, email=user_in.email)
     if user:
         raise HTTPException(
@@ -69,5 +103,21 @@ async def register(
 async def read_users_me(
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
-    """Get current user."""
+    """
+    Get current user - Protected endpoint.
+    
+    Returns information about the currently authenticated user.
+    
+    Authentication required: YES
+    Token type: Bearer token (in Authorization header)
+    Access level: Any authenticated active user
+    
+    Returns:
+        Current User object
+        
+    Raises:
+        401: Not authenticated
+        401: Could not validate credentials
+        400: Inactive user
+    """
     return current_user
