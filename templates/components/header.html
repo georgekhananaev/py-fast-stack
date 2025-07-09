@@ -1,10 +1,10 @@
 <!-- Modern Navigation Header Component -->
 <nav class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm sticky top-0 z-50 transition-all duration-300 w-full">
     <div class="w-full">
-        <div class="flex items-center justify-between h-16 lg:h-20 max-w-7xl mx-auto">
+        <div class="flex items-center justify-between h-16 lg:h-20 max-w-7xl mx-auto px-4 lg:px-0">
             <!-- Logo -->
-            <a href="/" class="flex items-center gap-3 group flex-shrink-0">
-                <img src="/static/images/logo.webp" alt="PyFastStack Logo" class="w-12 h-12 transition-transform duration-300 group-hover:scale-110">
+            <a href="/" class="flex items-center gap-1 group flex-shrink-0">
+                <img src="/static/images/logo.webp" alt="PyFastStack Logo" class="w-11 h-11 transition-transform duration-300 group-hover:scale-110">
                 <span class="text-xl font-bold tracking-tight">PyFastStack</span>
             </a>
 
@@ -145,9 +145,15 @@
 
         <!-- Mobile Navigation Menu -->
         <div class="nav-menu-mobile hidden" id="mobile-menu">
+            <!-- Close button -->
+            <button class="mobile-menu-close absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200" aria-label="Close menu" onclick="document.querySelector('.nav-menu-mobile').classList.add('hidden'); document.querySelector('.nav-menu-mobile').classList.remove('active'); document.body.style.overflow = ''; document.querySelector('.hamburger-icon').classList.remove('hidden'); document.querySelector('.menu-open-icon').classList.add('hidden'); document.querySelector('.mobile-menu-button').setAttribute('aria-expanded', 'false'); return false;">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
 
             <!-- Navigation Links -->
-            <div class="mobile-menu-content px-6 py-8 space-y-6">
+            <div class="mobile-menu-content px-8 md:px-12 lg:px-16 py-8 space-y-6 max-w-md mx-auto">
                 {% if user %}
                     <!-- User info section -->
                     <div class="flex items-center gap-4 p-4 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-2xl">

@@ -1323,9 +1323,30 @@ a:hover {
         z-index: 1000;
         overflow-y: auto;
         padding-top: 80px; /* Space for navbar */
-        padding-left: 1rem;
-        padding-right: 1rem;
-        padding-bottom: 1rem;
+        padding-left: 2rem;
+        padding-right: 2rem;
+        padding-bottom: 2rem;
+    }
+    
+    /* Responsive padding for larger screens */
+    @media (min-width: 768px) {
+        .nav-menu-mobile {
+            padding-left: 3rem;
+            padding-right: 3rem;
+        }
+    }
+    
+    @media (min-width: 1024px) {
+        .nav-menu-mobile {
+            padding-left: 4rem;
+            padding-right: 4rem;
+        }
+    }
+    
+    /* Mobile menu close button */
+    .mobile-menu-close {
+        z-index: 1001;
+        cursor: pointer;
     }
     
     .dark .nav-menu-mobile {

@@ -79,6 +79,8 @@ function updateThemeToggle(theme) {
 function initMobileMenu() {
     const mobileMenuButton = document.querySelector('.mobile-menu-button');
     const navMenuMobile = document.querySelector('.nav-menu-mobile');
+    const hamburgerIcon = document.querySelector('.hamburger-icon');
+    const menuOpenIcon = document.querySelector('.menu-open-icon');
     
     if (!mobileMenuButton || !navMenuMobile) {
         console.warn('Mobile menu elements not found', {
@@ -88,60 +90,86 @@ function initMobileMenu() {
         return;
     }
     
-    console.log('Mobile menu initialized');
-    
     let isOpen = false;
+    
+    // Close menu function
+    const closeMenu = () => {
+        isOpen = false;
+        // Hide menu
+        navMenuMobile.classList.add('hidden');
+        navMenuMobile.classList.remove('active');
+        mobileMenuButton.setAttribute('aria-expanded', 'false');
+        mobileMenuButton.classList.remove('active');
+        
+        // Toggle button icons
+        if (hamburgerIcon) hamburgerIcon.classList.remove('hidden');
+        if (menuOpenIcon) menuOpenIcon.classList.add('hidden');
+        
+        // Restore body scroll
+        document.body.style.overflow = '';
+    };
+    
+    // Open menu function
+    const openMenu = () => {
+        isOpen = true;
+        // Show menu
+        navMenuMobile.classList.remove('hidden');
+        navMenuMobile.classList.add('active');
+        mobileMenuButton.setAttribute('aria-expanded', 'true');
+        mobileMenuButton.classList.add('active');
+        
+        // Toggle button icons
+        if (hamburgerIcon) hamburgerIcon.classList.add('hidden');
+        if (menuOpenIcon) menuOpenIcon.classList.remove('hidden');
+        
+        // Prevent body scroll when menu is open
+        document.body.style.overflow = 'hidden';
+    };
     
     // Toggle menu function
     const toggleMenu = () => {
-        isOpen = !isOpen;
-        
         if (isOpen) {
-            // Show menu
-            navMenuMobile.classList.remove('hidden');
-            navMenuMobile.classList.add('active');
-            mobileMenuButton.setAttribute('aria-expanded', 'true');
-            mobileMenuButton.classList.add('active');
-            
-            // Prevent body scroll when menu is open
-            document.body.style.overflow = 'hidden';
+            closeMenu();
         } else {
-            // Hide menu
-            navMenuMobile.classList.add('hidden');
-            navMenuMobile.classList.remove('active');
-            mobileMenuButton.setAttribute('aria-expanded', 'false');
-            mobileMenuButton.classList.remove('active');
-            
-            // Restore body scroll
-            document.body.style.overflow = '';
+            openMenu();
         }
     };
     
+    // Mobile menu button click
     mobileMenuButton.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Mobile menu button clicked', { isOpen });
         toggleMenu();
     });
     
-    // Close menu when clicking outside
+    // Use event delegation for close button
     document.addEventListener('click', (e) => {
+        // Check if clicked element is the close button or its child
+        if (e.target.closest('.mobile-menu-close')) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Close button clicked via delegation');
+            closeMenu();
+            return;
+        }
+        
+        // Close menu when clicking outside
         if (isOpen && !navMenuMobile.contains(e.target) && !mobileMenuButton.contains(e.target)) {
-            toggleMenu();
+            closeMenu();
         }
     });
     
     // Close menu on escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && isOpen) {
-            toggleMenu();
+            closeMenu();
         }
     });
     
     // Close menu on window resize to desktop
     window.addEventListener('resize', () => {
         if (window.innerWidth >= 1024 && isOpen) {
-            toggleMenu();
+            closeMenu();
         }
     });
 }
