@@ -16,6 +16,34 @@
 
 **Stop building from scratch!** PyFastStack gives you a complete, production-ready web application foundation that would take months to build. Every feature is carefully crafted, tested, and optimized for real-world use.
 
+## 📸 Screenshots
+
+### 🎬 Demo Video
+![PyFastStack Demo](screenshots/video_small.gif)
+
+### 🌙 Dark Mode Views
+<table>
+  <tr>
+    <td><img src="screenshots/main-page-dark.png" alt="Main Page Dark Mode" width="100%"/></td>
+    <td><img src="screenshots/dashboard-dark.png" alt="Dashboard Dark Mode" width="100%"/></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/user-table-dark.png" alt="User Table Dark Mode" width="100%"/></td>
+    <td><img src="screenshots/login-dark.png" alt="Login Page Dark Mode" width="100%"/></td>
+  </tr>
+</table>
+
+### ☀️ Light Mode & Mobile
+<table>
+  <tr>
+    <td><img src="screenshots/main-page-light.png" alt="Main Page Light Mode" width="100%"/></td>
+    <td><img src="screenshots/main-page-mobile.png" alt="Mobile View" width="100%"/></td>
+  </tr>
+</table>
+
+### 🎨 Additional Views
+![Footer Dark Mode](screenshots/footer-dark.png)
+
 ## 🚀 Comprehensive Feature Set
 
 ### 🏗️ Core Tech Stack
