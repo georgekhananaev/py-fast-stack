@@ -1304,7 +1304,7 @@ a:hover {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
     /* Mobile Navigation */
     .nav-menu {
         display: none;
@@ -1320,32 +1320,17 @@ a:hover {
         width: 100vw;
         height: 100vh;
         background-color: #f8fafc; /* Light theme background */
-        z-index: 1000;
+        z-index: 9999; /* Highest z-index to cover everything */
         overflow-y: auto;
-        padding-top: 80px; /* Space for navbar */
+        padding-top: 80px; /* Space for close button */
         padding-left: 2rem;
         padding-right: 2rem;
         padding-bottom: 2rem;
     }
     
-    /* Responsive padding for larger screens */
-    @media (min-width: 768px) {
-        .nav-menu-mobile {
-            padding-left: 3rem;
-            padding-right: 3rem;
-        }
-    }
-    
-    @media (min-width: 1024px) {
-        .nav-menu-mobile {
-            padding-left: 4rem;
-            padding-right: 4rem;
-        }
-    }
-    
     /* Mobile menu close button */
     .mobile-menu-close {
-        z-index: 1001;
+        z-index: 10000; /* Higher than mobile menu */
         cursor: pointer;
     }
     

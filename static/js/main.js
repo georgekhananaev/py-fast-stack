@@ -168,7 +168,7 @@ function initMobileMenu() {
     
     // Close menu on window resize to desktop
     window.addEventListener('resize', () => {
-        if (window.innerWidth >= 1024 && isOpen) {
+        if (window.innerWidth >= 768 && isOpen) {
             closeMenu();
         }
     });

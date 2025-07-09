@@ -1,7 +1,7 @@
 <!-- Modern Navigation Header Component -->
 <nav class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm sticky top-0 z-50 transition-all duration-300 w-full">
     <div class="w-full">
-        <div class="flex items-center justify-between h-16 lg:h-20 max-w-7xl mx-auto px-4 lg:px-0">
+        <div class="flex items-center justify-between h-16 lg:h-20 max-w-7xl mx-auto px-4 md:px-8 lg:px-6">
             <!-- Logo -->
             <a href="/" class="flex items-center gap-1 group flex-shrink-0">
                 <img src="/static/images/logo.webp" alt="PyFastStack Logo" class="w-11 h-11 transition-transform duration-300 group-hover:scale-110">
@@ -12,7 +12,7 @@
             <div class="flex-1"></div>
 
             <!-- Desktop Navigation - All items at the end -->
-            <nav class="hidden lg:flex items-center gap-3">
+            <nav class="hidden md:flex items-center gap-3">
                 {% if user %}
                     <!-- Main Navigation Links -->
                     <a href="/dashboard" class="px-4 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200">
@@ -111,7 +111,7 @@
             </nav>
 
             <!-- Mobile Menu Button -->
-            <div class="flex items-center gap-3 lg:hidden">
+            <div class="flex items-center gap-3 md:hidden">
                 <!-- Theme Toggle Mobile -->
                 <button class="theme-toggle theme-toggle-mobile" aria-label="Toggle dark mode">
                     <div class="theme-toggle-slider">
@@ -153,7 +153,7 @@
             </button>
 
             <!-- Navigation Links -->
-            <div class="mobile-menu-content px-8 md:px-12 lg:px-16 py-8 space-y-6 max-w-md mx-auto">
+            <div class="mobile-menu-content px-8 md:px-16 lg:px-20 py-8 space-y-6 max-w-md mx-auto">
                 {% if user %}
                     <!-- User info section -->
                     <div class="flex items-center gap-4 p-4 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 rounded-2xl">
