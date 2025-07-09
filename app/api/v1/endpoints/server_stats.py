@@ -72,6 +72,32 @@ def get_server_stats() -> dict:
     process = psutil.Process()
     process_memory = process.memory_info()
     
+    # Fix CPU frequency for macOS (returns MHz on some systems, GHz on others)
+    cpu_freq_current = None
+    cpu_freq_max = None
+    if cpu_freq:
+        # If frequency is less than 100, it's likely in GHz, convert to MHz
+        if cpu_freq.current < 100:
+            cpu_freq_current = cpu_freq.current * 1000
+        else:
+            cpu_freq_current = cpu_freq.current
+            
+        if cpu_freq.max < 100:
+            cpu_freq_max = cpu_freq.max * 1000
+        else:
+            cpu_freq_max = cpu_freq.max
+    
+    # Disk info calculations
+    # On APFS (macOS), 'used' doesn't include all allocated space
+    # On Linux, 'used' is typically accurate
+    # Check if the reported used + free equals total (within 5% tolerance)
+    disk_used_calculated = disk.total - disk.free
+    disk_sum_check = abs((disk.used + disk.free) - disk.total) / disk.total < 0.05 if disk.total > 0 else True
+    
+    # If the sum doesn't match (typical on APFS), use calculated value
+    actual_disk_used = disk.used if disk_sum_check else disk_used_calculated
+    actual_disk_percent = (actual_disk_used / disk.total * 100) if disk.total > 0 else 0
+    
     return {
         # System info
         "hostname": platform.node(),
@@ -83,8 +109,8 @@ def get_server_stats() -> dict:
         # CPU info
         "cpu_count": psutil.cpu_count(logical=True),
         "cpu_percent": cpu_percent,
-        "cpu_freq_current": cpu_freq.current if cpu_freq else None,
-        "cpu_freq_max": cpu_freq.max if cpu_freq else None,
+        "cpu_freq_current": cpu_freq_current,
+        "cpu_freq_max": cpu_freq_max,
         
         # Memory info
         "memory_total": memory.total,
@@ -94,9 +120,9 @@ def get_server_stats() -> dict:
         
         # Disk info
         "disk_total": disk.total,
-        "disk_used": disk.used,
+        "disk_used": actual_disk_used,
         "disk_free": disk.free,
-        "disk_percent": disk.percent,
+        "disk_percent": actual_disk_percent,
         
         # Application info
         "app_uptime_seconds": uptime_seconds,

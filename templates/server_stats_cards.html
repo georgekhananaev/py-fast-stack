@@ -100,7 +100,7 @@
                 <div class="mb-4">
                     <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
                         <span>Memory Usage</span>
-                        <span>{{ "%.1f"|format(stats.memory_percent) }}%</span>
+                        <span>{{ stats.memory_used_formatted }} / {{ stats.memory_total_formatted }} ({{ "%.1f"|format(stats.memory_percent) }}%)</span>
                     </div>
                     <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div class="bg-primary-600 h-2 rounded-full transition-all duration-300" style="width: {{ min(stats.memory_percent, 100) }}%"></div>
@@ -132,7 +132,7 @@
                 <div class="mb-4">
                     <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
                         <span>Disk Usage</span>
-                        <span>{{ "%.1f"|format(stats.disk_percent) }}%</span>
+                        <span>{{ stats.disk_used_formatted }} / {{ stats.disk_total_formatted }} ({{ "%.1f"|format(stats.disk_percent) }}%)</span>
                     </div>
                     <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div class="bg-primary-600 h-2 rounded-full transition-all duration-300" style="width: {{ min(stats.disk_percent, 100) }}%"></div>
