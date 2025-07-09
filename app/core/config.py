@@ -30,6 +30,12 @@ class Settings(BaseSettings):
         default=["localhost", "127.0.0.1"],
         description="Allowed host headers"
     )
+    
+    # Development settings (optional)
+    dummy_user_password: str | None = Field(
+        default=None,
+        description="Password for dummy users in development"
+    )
 
     @field_validator('secret_key')
     def validate_secret_key(cls, v: str) -> str:

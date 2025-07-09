@@ -228,17 +228,24 @@ function initForms() {
         });
     });
     
-    // Password strength indicator with visual feedback
+    // Password strength indicator with visual feedback (only for registration forms)
     const passwordInputs = document.querySelectorAll('input[type="password"][name="password"]');
     passwordInputs.forEach(input => {
-        const strengthContainer = document.createElement('div');
-        strengthContainer.className = 'mt-2';
-        input.parentElement.appendChild(strengthContainer);
+        // Only add password strength to registration forms, not login forms
+        const isLoginForm = input.closest('form')?.action?.includes('/login') || 
+                           input.classList.contains('password-input') ||
+                           window.location.pathname === '/login';
         
-        input.addEventListener('input', function() {
-            const strength = getPasswordStrength(this.value);
-            updatePasswordStrengthIndicator(strengthContainer, strength);
-        });
+        if (!isLoginForm) {
+            const strengthContainer = document.createElement('div');
+            strengthContainer.className = 'mt-2';
+            input.parentElement.appendChild(strengthContainer);
+            
+            input.addEventListener('input', function() {
+                const strength = getPasswordStrength(this.value);
+                updatePasswordStrengthIndicator(strengthContainer, strength);
+            });
+        }
     });
     
     // Input animations
@@ -455,6 +462,24 @@ window.addEventListener('beforeunload', () => {
     document.body.style.opacity = '0';
 });
 
+// Toggle password visibility function (global)
+window.togglePassword = function(inputId) {
+    const input = document.getElementById(inputId);
+    const button = event.currentTarget;
+    const eyeOpen = button.querySelector('.eye-open');
+    const eyeClosed = button.querySelector('.eye-closed');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        eyeOpen.classList.add('hidden');
+        eyeClosed.classList.remove('hidden');
+    } else {
+        input.type = 'password';
+        eyeOpen.classList.remove('hidden');
+        eyeClosed.classList.add('hidden');
+    }
+};
+
 // Export utilities for use in other scripts
 window.pyFastStack = {
     authenticatedFetch,
@@ -462,6 +487,7 @@ window.pyFastStack = {
     setCookie,
     deleteCookie,
     getCSRFToken,
+    togglePassword: window.togglePassword,
     showAlert: (message, type = 'info') => {
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${type} mx-4 mt-6 animate-slide-down fixed top-16 right-0 left-0 z-50 max-w-md mx-auto`;
