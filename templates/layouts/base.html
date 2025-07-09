@@ -68,6 +68,8 @@
     </script>
     <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
     <link rel="stylesheet" href="/static/css/style.css">
+    <!-- HTMX for dynamic updates -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     {% block extra_css %}{% endblock %} <style>        /* Essential mobile menu animations that can't be replaced with pure Tailwind */\n        .mobile-menu-button .hamburger-icon,\n        .mobile-menu-button .menu-open-icon {\n            transition: all 0.3s ease;\n        }\n        \n        .mobile-menu-button.active .hamburger-icon {\n            opacity: 0;\n            transform: rotate(-90deg) scale(0.9);\n        }\n        \n        .mobile-menu-button.active .menu-open-icon {\n            opacity: 1;\n            transform: rotate(0deg) scale(1);\n        }\n        \n        .nav-menu-mobile.active {\n            display: block !important;\n        }\n    </style>
     <script>
         // Apply theme immediately to prevent flash

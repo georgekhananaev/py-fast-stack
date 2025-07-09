@@ -8,7 +8,7 @@ Routes are organized by functionality and access level:
 """
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, subscriptions, users
+from app.api.v1.endpoints import auth, subscriptions, users, server_stats
 
 api_router = APIRouter()
 
@@ -42,4 +42,14 @@ api_router.include_router(
 api_router.include_router(
     subscriptions.router,
     tags=["📧 Newsletter Management"]
+)
+
+# ===== PROTECTED - SERVER STATISTICS =====
+# Authenticated user endpoints for server monitoring
+# GET /server-stats/ - Get server statistics
+# GET /server-stats/formatted - Get formatted server statistics
+api_router.include_router(
+    server_stats.router,
+    prefix="/server-stats",
+    tags=["📊 Server Monitoring"]
 )

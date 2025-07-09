@@ -1,0 +1,74 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div class="py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Server Statistics</h1>
+            <p class="mt-2 text-lg text-gray-600 dark:text-gray-400">
+                Real-time server resource monitoring
+            </p>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loading-indicator" class="htmx-indicator fixed top-4 right-4 z-50">
+            <div class="bg-primary-600 text-white px-3 py-1 rounded-lg shadow-lg flex items-center">
+                <svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Updating...
+            </div>
+        </div>
+
+        <!-- Stats Container with HTMX -->
+        <div id="stats-container" 
+             hx-get="/server-stats/cards" 
+             hx-trigger="load, every 3s"
+             hx-swap="innerHTML">
+            <!-- Initial content will be loaded by HTMX -->
+            <div class="flex justify-center items-center h-64">
+                <div class="text-center">
+                    <svg class="animate-spin h-8 w-8 mx-auto mb-4 text-primary-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="text-gray-500 dark:text-gray-400">Loading server statistics...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Status -->
+        <div class="mt-8 text-center">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                <svg class="inline-block w-4 h-4 mr-1 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="5"/>
+                </svg>
+                Auto-updating every 3 seconds
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+/* HTMX indicator styles */
+.htmx-indicator {
+    opacity: 0;
+    transition: opacity 200ms ease-in;
+}
+.htmx-request .htmx-indicator {
+    opacity: 1;
+}
+.htmx-request.htmx-indicator {
+    opacity: 1;
+}
+
+/* Smooth transitions for progress bars */
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+}
+</style>
+{% endblock %}

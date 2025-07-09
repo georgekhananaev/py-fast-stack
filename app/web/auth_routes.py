@@ -13,6 +13,7 @@ from app.core.security import verify_password
 from app.crud import user as crud_user
 from app.db.session import get_db
 from app.schemas.user import UserUpdate
+from app.api.v1.endpoints.server_stats import get_server_stats, format_bytes, format_uptime
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -193,4 +194,104 @@ async def change_password(
     return RedirectResponse(
         url="/profile?success=Password changed successfully",
         status_code=status.HTTP_302_FOUND
+    )
+
+
+@router.get("/server-stats", response_class=HTMLResponse)
+async def server_stats(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Server statistics page - Protected endpoint.
+    
+    Displays server resource usage and system information.
+    
+    Authentication required: YES
+    Token type: Cookie-based (access_token)
+    Access level: Any authenticated user
+    
+    Returns:
+        - If authenticated: Server statistics page
+        - If not authenticated: Redirect to login
+    """
+    # Manual authentication check
+    current_user = await get_current_user_from_cookie(request, db)
+    if not current_user:
+        return RedirectResponse(url="/login", status_code=303)
+
+    # Get server statistics
+    stats = get_server_stats()
+    
+    # Add formatted values for template
+    stats_formatted = {
+        **stats,
+        "memory_total_formatted": format_bytes(stats["memory_total"]),
+        "memory_used_formatted": format_bytes(stats["memory_used"]),
+        "memory_available_formatted": format_bytes(stats["memory_available"]),
+        "disk_total_formatted": format_bytes(stats["disk_total"]),
+        "disk_used_formatted": format_bytes(stats["disk_used"]),
+        "disk_free_formatted": format_bytes(stats["disk_free"]),
+        "uptime_formatted": format_uptime(stats["app_uptime_seconds"]),
+        "process_memory_rss_formatted": format_bytes(stats["process_memory_rss"]),
+        "process_memory_vms_formatted": format_bytes(stats["process_memory_vms"]),
+    }
+
+    return templates.TemplateResponse(
+        "server_stats.html",
+        {
+            "request": request, 
+            "title": "Server Statistics", 
+            "user": current_user,
+            "stats": stats_formatted
+        }
+    )
+
+
+@router.get("/server-stats/cards", response_class=HTMLResponse)
+async def server_stats_cards(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Server statistics cards partial - Protected endpoint.
+    
+    Returns only the stats cards for HTMX updates.
+    
+    Authentication required: YES
+    Token type: Cookie-based (access_token)
+    Access level: Any authenticated user
+    
+    Returns:
+        - If authenticated: Server statistics cards HTML partial
+        - If not authenticated: Empty response (for HTMX requests)
+    """
+    # Manual authentication check
+    current_user = await get_current_user_from_cookie(request, db)
+    if not current_user:
+        return HTMLResponse("")  # Return empty for HTMX requests
+    
+    # Get server statistics
+    stats = get_server_stats()
+    
+    # Add formatted values for template
+    stats_formatted = {
+        **stats,
+        "memory_total_formatted": format_bytes(stats["memory_total"]),
+        "memory_used_formatted": format_bytes(stats["memory_used"]),
+        "memory_available_formatted": format_bytes(stats["memory_available"]),
+        "disk_total_formatted": format_bytes(stats["disk_total"]),
+        "disk_used_formatted": format_bytes(stats["disk_used"]),
+        "disk_free_formatted": format_bytes(stats["disk_free"]),
+        "uptime_formatted": format_uptime(stats["app_uptime_seconds"]),
+        "process_memory_rss_formatted": format_bytes(stats["process_memory_rss"]),
+        "process_memory_vms_formatted": format_bytes(stats["process_memory_vms"]),
+    }
+    
+    return templates.TemplateResponse(
+        "server_stats_cards.html",
+        {
+            "request": request,
+            "stats": stats_formatted
+        }
     )

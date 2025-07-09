@@ -39,6 +39,7 @@ dependencies = [
     "colorama>=0.4.6",
     "requests>=2.32.4",
     "slowapi>=0.1.9",
+    "psutil>=6.1.0",
 ]
 
 [project.optional-dependencies]
