@@ -61,25 +61,26 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
+
 class PyFastStackMCPServer:
     def __init__(self):
         self.server = Server("pyfaststack-mcp")
         self.setup_handlers()
-    
+
     def setup_handlers(self):
         """Register all MCP handlers."""
         # Resource handlers
         self.server.list_resources.handler(self.handle_list_resources)
         self.server.read_resource.handler(self.handle_read_resource)
-        
+
         # Tool handlers
         self.server.list_tools.handler(self.handle_list_tools)
         self.server.call_tool.handler(self.handle_call_tool)
-        
+
         # Prompt handlers
         self.server.list_prompts.handler(self.handle_list_prompts)
         self.server.get_prompt.handler(self.handle_get_prompt)
-    
+
     async def handle_list_resources(self, request: Request) -> List[Resource]:
         """List all available resources."""
         resources = [
@@ -121,11 +122,11 @@ class PyFastStackMCPServer:
             )
         ]
         return resources
-    
+
     async def handle_read_resource(self, request: Request) -> ResourceContent:
         """Read a specific resource."""
         uri = request.params["uri"]
-        
+
         if uri == "pyfaststack://users":
             return await self._read_users()
         elif uri == "pyfaststack://subscriptions":
@@ -140,7 +141,7 @@ class PyFastStackMCPServer:
             return await self._read_static(uri)
         else:
             raise ValueError(f"Unknown resource: {uri}")
-    
+
     async def _read_users(self) -> ResourceContent:
         """Read user data from database."""
         async with get_db() as db:
@@ -156,13 +157,13 @@ class PyFastStackMCPServer:
                 }
                 for user in users
             ]
-        
+
         return ResourceContent(
             uri="pyfaststack://users",
             mimeType="application/json",
             content=TextContent(text=json.dumps(user_data, indent=2))
         )
-    
+
     async def _read_subscriptions(self) -> ResourceContent:
         """Read subscription data."""
         async with get_db() as db:
@@ -176,21 +177,21 @@ class PyFastStackMCPServer:
                 }
                 for sub in subs
             ]
-        
+
         return ResourceContent(
             uri="pyfaststack://subscriptions",
             mimeType="application/json",
             content=TextContent(text=json.dumps(sub_data, indent=2))
         )
-    
+
     async def _read_blob(self, uri: str) -> ResourceContent:
         """Read blob data from storage."""
         blob_path = uri.replace("pyfaststack://blobs/", "")
         file_path = Path(settings.upload_dir) / blob_path
-        
+
         if not file_path.exists():
             raise ValueError(f"Blob not found: {blob_path}")
-        
+
         # Determine mime type
         mime_type = "application/octet-stream"
         if file_path.suffix.lower() in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
@@ -199,11 +200,11 @@ class PyFastStackMCPServer:
             mime_type = "application/pdf"
         elif file_path.suffix.lower() in ['.txt', '.md']:
             mime_type = "text/plain"
-        
+
         # Read file content
         with open(file_path, 'rb') as f:
             content = f.read()
-        
+
         # Return appropriate content type
         if mime_type.startswith('image/'):
             return ResourceContent(
@@ -229,7 +230,7 @@ class PyFastStackMCPServer:
                     mimeType=mime_type
                 )
             )
-    
+
     async def _read_config(self) -> ResourceContent:
         """Read application configuration."""
         config_data = {
@@ -245,38 +246,38 @@ class PyFastStackMCPServer:
                 "caching": False
             }
         }
-        
+
         return ResourceContent(
             uri="pyfaststack://config",
             mimeType="application/json",
             content=TextContent(text=json.dumps(config_data, indent=2))
         )
-    
+
     async def _read_template(self, uri: str) -> ResourceContent:
         """Read HTML template."""
         template_path = uri.replace("pyfaststack://templates/", "")
-        file_path = Path("templates") / template_path
-        
+        file_path = Path("../templates") / template_path
+
         if not file_path.exists():
             raise ValueError(f"Template not found: {template_path}")
-        
+
         with open(file_path, 'r') as f:
             content = f.read()
-        
+
         return ResourceContent(
             uri=uri,
             mimeType="text/html",
             content=TextContent(text=content)
         )
-    
+
     async def _read_static(self, uri: str) -> ResourceContent:
         """Read static file."""
         static_path = uri.replace("pyfaststack://static/", "")
-        file_path = Path("static") / static_path
-        
+        file_path = Path("../static") / static_path
+
         if not file_path.exists():
             raise ValueError(f"Static file not found: {static_path}")
-        
+
         # Determine mime type
         mime_map = {
             '.css': 'text/css',
@@ -287,10 +288,10 @@ class PyFastStackMCPServer:
             '.webp': 'image/webp'
         }
         mime_type = mime_map.get(file_path.suffix.lower(), 'application/octet-stream')
-        
+
         with open(file_path, 'rb') as f:
             content = f.read()
-        
+
         if mime_type.startswith('text/') or mime_type == 'application/javascript':
             return ResourceContent(
                 uri=uri,
@@ -306,7 +307,7 @@ class PyFastStackMCPServer:
                     mimeType=mime_type
                 )
             )
-    
+
     async def handle_list_tools(self, request: Request) -> List[Tool]:
         """List available tools."""
         tools = [
@@ -377,12 +378,12 @@ class PyFastStackMCPServer:
             )
         ]
         return tools
-    
+
     async def handle_call_tool(self, request: Request) -> ToolResult:
         """Execute a tool."""
         tool_name = request.params["name"]
         arguments = request.params.get("arguments", {})
-        
+
         if tool_name == "search_users":
             return await self._search_users(arguments["query"])
         elif tool_name == "create_subscription":
@@ -397,15 +398,15 @@ class PyFastStackMCPServer:
             )
         else:
             raise ValueError(f"Unknown tool: {tool_name}")
-    
+
     async def _search_users(self, query: str) -> ToolResult:
         """Search for users."""
         async with get_db() as db:
             users = db.query(User).filter(
-                (User.username.contains(query)) | 
+                (User.username.contains(query)) |
                 (User.email.contains(query))
             ).all()
-            
+
             results = [
                 {
                     "id": user.id,
@@ -414,7 +415,7 @@ class PyFastStackMCPServer:
                 }
                 for user in users
             ]
-        
+
         return ToolResult(
             content=TextContent(
                 text=json.dumps({
@@ -424,7 +425,7 @@ class PyFastStackMCPServer:
                 }, indent=2)
             )
         )
-    
+
     async def _create_subscription(self, email: str) -> ToolResult:
         """Create a newsletter subscription."""
         async with get_db() as db:
@@ -439,12 +440,12 @@ class PyFastStackMCPServer:
                         }, indent=2)
                     )
                 )
-            
+
             # Create new subscription
             sub = Subscription(email=email)
             db.add(sub)
             db.commit()
-            
+
             return ToolResult(
                 content=TextContent(
                     text=json.dumps({
@@ -454,11 +455,11 @@ class PyFastStackMCPServer:
                     }, indent=2)
                 )
             )
-    
+
     async def _analyze_template(self, template_name: str) -> ToolResult:
         """Analyze a template for SEO issues."""
-        template_path = Path("templates") / template_name
-        
+        template_path = Path("../templates") / template_name
+
         if not template_path.exists():
             return ToolResult(
                 content=TextContent(
@@ -467,25 +468,25 @@ class PyFastStackMCPServer:
                     }, indent=2)
                 )
             )
-        
+
         with open(template_path, 'r') as f:
             content = f.read()
-        
+
         # Simple SEO analysis
         issues = []
-        
+
         if '<title>' not in content and '{% block title %}' not in content:
             issues.append("Missing title tag")
-        
+
         if 'meta name="description"' not in content:
             issues.append("Missing meta description")
-        
+
         if 'og:title' not in content:
             issues.append("Missing Open Graph tags")
-        
+
         if 'alt=' not in content and '<img' in content:
             issues.append("Images may be missing alt attributes")
-        
+
         return ToolResult(
             content=TextContent(
                 text=json.dumps({
@@ -496,11 +497,11 @@ class PyFastStackMCPServer:
                 }, indent=2)
             )
         )
-    
+
     async def _upload_blob(self, filename: str, content: str, mime_type: str) -> ToolResult:
         """Upload a file to blob storage."""
         import base64
-        
+
         # Decode base64 content
         try:
             file_data = base64.b64decode(content)
@@ -513,14 +514,14 @@ class PyFastStackMCPServer:
                     }, indent=2)
                 )
             )
-        
+
         # Save to upload directory
         upload_path = Path(settings.upload_dir) / filename
         upload_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(upload_path, 'wb') as f:
             f.write(file_data)
-        
+
         return ToolResult(
             content=TextContent(
                 text=json.dumps({
@@ -532,7 +533,7 @@ class PyFastStackMCPServer:
                 }, indent=2)
             )
         )
-    
+
     async def handle_list_prompts(self, request: Request) -> List[Dict[str, Any]]:
         """List available prompts."""
         prompts = [
@@ -559,12 +560,12 @@ class PyFastStackMCPServer:
             }
         ]
         return prompts
-    
+
     async def handle_get_prompt(self, request: Request) -> Dict[str, Any]:
         """Get a specific prompt."""
         prompt_name = request.params["name"]
         arguments = request.params.get("arguments", {})
-        
+
         if prompt_name == "analyze_seo":
             return {
                 "messages": [
@@ -595,7 +596,7 @@ class PyFastStackMCPServer:
             }
         else:
             raise ValueError(f"Unknown prompt: {prompt_name}")
-    
+
     async def run(self):
         """Run the MCP server."""
         async with stdio_server() as (read_stream, write_stream):

@@ -259,25 +259,26 @@ Create `app/utils/image_optimizer.py`:
 from PIL import Image
 import os
 
+
 def optimize_images():
-    """Optimize images for web performance."""
-    static_dir = "static/images"
-    
-    for filename in os.listdir(static_dir):
-        if filename.endswith(('.png', '.jpg', '.jpeg')):
-            filepath = os.path.join(static_dir, filename)
-            img = Image.open(filepath)
-            
-            # Convert to WebP
-            webp_path = filepath.rsplit('.', 1)[0] + '.webp'
-            img.save(webp_path, 'webp', optimize=True, quality=85)
-            
-            # Create different sizes for responsive images
-            sizes = [(1200, 630), (600, 315), (300, 157)]  # OG image sizes
-            for width, height in sizes:
-                resized = img.resize((width, height), Image.Resampling.LANCZOS)
-                size_path = filepath.rsplit('.', 1)[0] + f'_{width}x{height}.webp'
-                resized.save(size_path, 'webp', optimize=True, quality=85)
+   """Optimize images for web performance."""
+   static_dir = "../static/images"
+
+   for filename in os.listdir(static_dir):
+      if filename.endswith(('.png', '.jpg', '.jpeg')):
+         filepath = os.path.join(static_dir, filename)
+         img = Image.open(filepath)
+
+         # Convert to WebP
+         webp_path = filepath.rsplit('.', 1)[0] + '.webp'
+         img.save(webp_path, 'webp', optimize=True, quality=85)
+
+         # Create different sizes for responsive images
+         sizes = [(1200, 630), (600, 315), (300, 157)]  # OG image sizes
+         for width, height in sizes:
+            resized = img.resize((width, height), Image.Resampling.LANCZOS)
+            size_path = filepath.rsplit('.', 1)[0] + f'_{width}x{height}.webp'
+            resized.save(size_path, 'webp', optimize=True, quality=85)
 ```
 
 #### 4.2 Lazy Loading

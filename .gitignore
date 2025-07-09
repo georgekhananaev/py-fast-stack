@@ -226,6 +226,7 @@ share/python-wheels/
 PIPFILE.lock
 
 # Documentation
+docs/
 docs/_build/
 site/
 

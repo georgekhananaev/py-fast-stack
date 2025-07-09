@@ -6,12 +6,15 @@ These routes are accessible to any authenticated user (regular users).
 from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.auth_dependencies import get_current_user_from_cookie
 from app.core.rate_limiter import limiter
 from app.core.security import verify_password
 from app.crud import user as crud_user
 from app.db.session import get_db
+from app.models.user import User
+from app.models.subscription import Subscription
 from app.schemas.user import UserUpdate
 from app.api.v1.endpoints.server_stats import get_server_stats, format_bytes, format_uptime
 
@@ -52,9 +55,50 @@ async def dashboard(
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
 
+    # Get quick stats if user is superuser
+    user_stats = None
+    subscriber_stats = None
+    
+    if current_user.is_superuser:
+        # Get user counts
+        total_users_result = await db.execute(select(func.count(User.id)))
+        total_users = total_users_result.scalar() or 0
+        
+        active_users_result = await db.execute(
+            select(func.count(User.id)).where(User.is_active == True)
+        )
+        active_users = active_users_result.scalar() or 0
+        
+        # Get subscriber counts
+        total_subscribers_result = await db.execute(select(func.count(Subscription.id)))
+        total_subscribers = total_subscribers_result.scalar() or 0
+        
+        active_subscribers_result = await db.execute(
+            select(func.count(Subscription.id)).where(Subscription.is_active == True)
+        )
+        active_subscribers = active_subscribers_result.scalar() or 0
+        
+        user_stats = {
+            "total": total_users,
+            "active": active_users,
+            "inactive": total_users - active_users
+        }
+        
+        subscriber_stats = {
+            "total": total_subscribers,
+            "active": active_subscribers,
+            "inactive": total_subscribers - active_subscribers
+        }
+
     return templates.TemplateResponse(
         "dashboard.html",
-        {"request": request, "title": "Dashboard", "user": current_user}
+        {
+            "request": request,
+            "title": "Dashboard",
+            "user": current_user,
+            "user_stats": user_stats,
+            "subscriber_stats": subscriber_stats
+        }
     )
 
 
