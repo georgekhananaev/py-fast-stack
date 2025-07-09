@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.security import verify_token
 from app.crud import subscription as crud_subscription
 from app.crud import user as crud_user
@@ -16,6 +17,14 @@ from app.schemas.user import UserUpdate
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+settings = get_settings()
+
+# Add built-in functions to Jinja2 globals
+templates.env.globals.update({
+    'min': min,
+    'max': max,
+    'range': range
+})
 
 
 # Import auth dependencies from core module instead of defining them here
@@ -117,10 +126,7 @@ async def users_list(
             "sort_by": sort_by,
             "sort_order": sort_order,
             "sort_url": sort_url,
-            "pagination_url": pagination_url,
-            "min": min,
-            "max": max,
-            "range": range
+            "pagination_url": pagination_url
         }
     )
 
@@ -423,10 +429,7 @@ async def subscribers_list(
             "sort_by": sort_by,
             "sort_order": sort_order,
             "sort_url": sort_url,
-            "pagination_url": pagination_url,
-            "min": min,
-            "max": max,
-            "range": range
+            "pagination_url": pagination_url
         }
     )
 
@@ -473,11 +476,11 @@ async def delete_subscriber(
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     # Get subscriber to delete
-    subscriber = await crud_subscription.subscription.get(db, id=subscriber_id)
+    subscriber = await crud_subscription.get(db, id=subscriber_id)
     if not subscriber:
         raise HTTPException(status_code=404, detail="Subscriber not found")
 
     # Delete the subscriber
-    await crud_subscription.subscription.remove(db, id=subscriber_id)
+    await crud_subscription.remove(db, id=subscriber_id)
 
     return {"detail": "Subscriber deleted successfully"}

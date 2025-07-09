@@ -2,8 +2,6 @@
 
 Modern, production-ready Python web stack built with FastAPI, Tailwind CSS, and HTMX. Lightning-fast async architecture with JWT auth, real-time UI updates, and beautiful dark mode.
 
-**Created by [George Khananaev](https://george.khananaev.com/)**
-
 ## 🚀 Features
 
 ### Core Tech Stack
@@ -15,7 +13,7 @@ Modern, production-ready Python web stack built with FastAPI, Tailwind CSS, and 
 ### Developer Experience
 - **100% Type Hints** - Full type safety with Pydantic validation
 - **Async Everything** - Database, auth, even password hashing runs async
-- **Auto API Docs** - Interactive Swagger UI and ReDoc out of the box
+- **Auto API Docs** - Interactive Swagger UI out of the box
 - **Hot Reload** - See changes instantly in development
 
 ### Production Ready
@@ -23,6 +21,7 @@ Modern, production-ready Python web stack built with FastAPI, Tailwind CSS, and 
 - **Async SQLAlchemy 2.0** - Modern ORM with connection pooling
 - **Gunicorn + Uvicorn** - Production-grade ASGI server setup
 - **Dark/Light Mode** - Beautiful theme switching with CSS transitions
+- **Rate Limiting** - Protection against brute force attacks
 
 ### Performance
 - **10,000+ concurrent connections** - Handle serious traffic
@@ -45,6 +44,7 @@ pyfaststack/
 │   └── web/            # Web routes for UI
 ├── static/             # Static files (CSS, JS, images)
 ├── templates/          # Jinja2 HTML templates
+├── tests/              # Test suite with performance benchmarks
 ├── pyproject.toml      # Project configuration and dependencies
 ├── gunicorn.conf.py    # Gunicorn server configuration
 └── run.py              # Application entry point
@@ -66,7 +66,7 @@ pyfaststack/
 
 2. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/georgekhananaev/py-fast-stack.git
    cd pyfaststack
    ```
 
@@ -83,6 +83,7 @@ pyfaststack/
 4. **Set up environment variables**
    ```bash
    # Create a .env file (optional, has defaults)
+   cp .env.example .env
    ```
    
    Update `.env` with your settings:
@@ -94,16 +95,8 @@ pyfaststack/
 ### Development Mode
 ```bash
 uv run python run.py
-# Or if uv environment is activated:
-python run.py
-
-# The application automatically runs with auto-reload when DEBUG=True in .env
-# This uses Gunicorn with reload enabled for development
-
-# Alternatively, run Uvicorn directly for development:
+# Or with auto-reload:
 uv run uvicorn app.main:app --reload
-# Or if uv environment is activated:
-uvicorn app.main:app --reload
 ```
 
 On first run, the application will:
@@ -114,7 +107,6 @@ On first run, the application will:
 The application will be available at:
 - **Web UI**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
-- **Alternative API Docs**: http://localhost:8000/redoc
 
 ### Production Mode
 For production, set DEBUG=False in .env and run:
@@ -155,6 +147,35 @@ Database features:
 - Automatic connection recycling
 - Indexed fields for optimal query performance
 
+## 🔒 Security Features
+
+### Authentication & Authorization
+- **Password Hashing** - Bcrypt with salt for secure password storage
+- **JWT Tokens** - Secure authentication tokens with expiration
+- **Role-Based Access** - Superuser and regular user roles
+- **Async Password Operations** - Non-blocking password hashing and verification
+
+### Rate Limiting
+- **Login Protection** - 5 attempts per minute per IP
+- **Registration Protection** - 3 new accounts per minute per IP
+- **Password Change Protection** - 3 attempts per minute
+- **Newsletter Subscription** - 3 subscriptions per minute
+- **Health Endpoint** - No rate limiting (for monitoring)
+
+### Security Headers & Middleware
+- **CORS Protection** - Configurable allowed origins
+- **Trusted Host Middleware** - Prevents host header attacks
+- **Security Headers** - X-Content-Type-Options, X-Frame-Options, etc.
+- **Request Size Limits** - 100MB max request size
+- **SQL Injection Protection** - Via SQLAlchemy ORM
+- **Type Validation** - Pydantic validates all input data
+
+### Additional Security
+- **HTTPS Ready** - Secure cookie settings for production
+- **Environment Variables** - Sensitive data kept out of code
+- **Protected Routes** - Automatic authentication checks
+- **User Deletion Protection** - Root user cannot be deleted
+
 ## 🎨 UI Features
 
 ### Dark/Light Mode
@@ -170,14 +191,13 @@ Database features:
 ## 📚 API Endpoints
 
 ### Health Check
-- `GET /health` - Health check endpoint (optimized for benchmarking)
+- `GET /health` - Health check endpoint (no rate limiting)
   - Returns: `{"status": "healthy", "datetime": "2024-01-20T10:30:00", "timestamp": 1705749000.0}`
-  - Minimal overhead for accurate performance testing
-  - No database queries or authentication required
+  - Optimized for monitoring and benchmarking
 
 ### Authentication
-- `POST /api/v1/auth/register` - Register new user
-- `POST /api/v1/auth/login` - Login (returns JWT token)
+- `POST /api/v1/auth/register` - Register new user (rate limited: 3/min)
+- `POST /api/v1/auth/login` - Login (rate limited: 5/min)
 - `GET /api/v1/auth/me` - Get current user info
 
 ### Users (requires authentication)
@@ -185,124 +205,85 @@ Database features:
 - `GET /api/v1/users/{id}` - Get user by ID
 - `PUT /api/v1/users/{id}` - Update user (admin only)
 
+### Newsletter
+- `POST /api/v1/subscribe` - Subscribe to newsletter (rate limited: 3/min)
+- `DELETE /api/v1/unsubscribe/{email}` - Unsubscribe
+- `GET /api/v1/subscriptions` - List subscribers (admin only)
 
 ## 🧪 Testing
 
-PyFastStack comes with tests for all the important stuff - auth, users, API endpoints, and performance.
+PyFastStack includes comprehensive tests for authentication, user management, performance, and security features.
 
-### Important: Tests Require Running Server
+### Running Tests
 
-**The tests connect to the actual running server, not a test server. You must start the server before running tests.**
+1. **Start the server** (tests require a running server):
+   ```bash
+   uv run uvicorn app.main:app --reload
+   ```
 
-### Step 1: Start the Server
+2. **Create test users** (one-time setup):
+   ```bash
+   uv run python tests/create_test_users.py
+   ```
 
-In one terminal, start the server:
-```bash
-uv run python run.py
-```
+3. **Run all tests**:
+   ```bash
+   # Using the test runner (recommended)
+   uv run python run_tests.py
+   
+   # Or with pytest directly
+   uv run pytest
+   
+   # Run with coverage
+   uv run pytest --cov=app --cov-report=html
+   
+   # Run specific test categories
+   uv run pytest -m "not rate_limit"  # Skip rate limit tests
+   uv run pytest tests/test_auth.py    # Run only auth tests
+   ```
 
-Note the root user credentials displayed.
-
-### Step 2: Install Test Dependencies
-
-```bash
-# Install test dependencies
-uv sync --extra test
-```
-
-### Step 3: Run Tests
-
-In a separate terminal, while the server is running:
-
-```bash
-# Easy way - using the test runner script
-uv run python run_tests.py
-
-# Or manually with pytest
-uv run pytest
-
-# Run with coverage report
-uv run pytest --cov=app --cov-report=html
-
-# Run specific test file
-uv run pytest tests/test_auth.py -v
-
-# Run specific test class or function
-uv run pytest tests/test_users.py::TestUserOperations::test_list_users_as_superuser
-
-# Run performance tests with detailed output
-uv run pytest tests/test_performance.py -v -s
-```
-
-### Test Coverage
-
-What's tested:
+### Test Categories
 
 1. **Authentication Tests** (`test_auth.py`)
-   - User registration (success, duplicate email/username)
-   - Login (success, wrong password, inactive user)
-   - Token validation
-   - Current user endpoint
+   - User registration with validation
+   - Login with various scenarios
+   - JWT token validation
+   - Password security
 
-2. **User CRUD Tests** (`test_users.py`)
-   - List users (with permissions check)
-   - Get user by ID
-   - Update user (with permissions)
-   - Delete user (with protection for root user)
-   - Profile updates and password changes
+2. **User Management Tests** (`test_users.py`)
+   - CRUD operations with permissions
+   - Profile management
+   - Superuser capabilities
 
-3. **Performance Tests** (`test_performance.py`)
-   - Single request latency
+3. **Web UI Tests** (`test_users_web.py`)
+   - Form submissions
+   - Cookie-based authentication
+   - User dashboard functionality
+
+4. **Performance Tests** (`test_performance.py`)
+   - Response time benchmarks
    - Concurrent request handling
-   - Authenticated endpoint performance
    - Database operation performance
-   - Load testing with mixed endpoints
-   - Stress testing (max requests/second)
+   - Load testing scenarios
+
+5. **Rate Limiter Tests** (`test_rate_limiter.py`)
+   - Login rate limiting
+   - Registration rate limiting
+   - API endpoint protection
+   - Rate limit reset behavior
 
 ### Performance Benchmarks
 
-Run the performance tests to see detailed metrics:
-
+Run performance tests to see detailed metrics:
 ```bash
-# Run performance tests with output
 uv run pytest tests/test_performance.py -v -s
-
-# Example output:
-# --- Concurrent Health Endpoint Test ---
-# Total requests: 100
-# Total time: 0.84s
-# Requests/second: 119.05
-# Avg response time: 35.21ms
-# Min response time: 10.52ms
-# Max response time: 68.94ms
 ```
 
-### Benchmark Results
-
-On a typical development machine, PyFastStack achieves:
+Expected performance on typical hardware:
 - **Health endpoint**: 100-500+ requests/second
 - **Authenticated endpoints**: 50-200 requests/second
 - **Database operations**: 20-100 requests/second
 - **Response times**: <50ms for health, <200ms for auth endpoints
-
-### Writing New Tests
-
-Tests use `pytest` with async support. Available fixtures:
-
-- `client`: Async HTTP client for making requests
-- `db_session`: Database session for test data
-- `test_user`: Regular user fixture
-- `test_superuser`: Admin user fixture
-- `auth_headers`: Authentication headers for regular user
-- `superuser_auth_headers`: Authentication headers for admin
-
-Example test:
-```python
-@pytest.mark.asyncio
-async def test_my_endpoint(client: AsyncClient, auth_headers: dict):
-    response = await client.get("/my-endpoint", headers=auth_headers)
-    assert response.status_code == 200
-```
 
 ## 🧹 Code Quality
 
@@ -316,16 +297,6 @@ uv run ruff check .
 # Type check with MyPy
 uv run mypy app/
 ```
-
-## 🔒 Security Features
-
-- **Password Hashing** - Bcrypt with salt (the good stuff)
-- **JWT Tokens** - Secure authentication tokens
-- **CORS Protection** - Configure who can access your API
-- **SQL Injection Protection** - SQLAlchemy handles this for you
-- **Type Validation** - Pydantic catches bad data before it causes problems
-- **HTTPS Ready** - Just add a reverse proxy
-- **Async Password Hashing** - Won't block your other requests
 
 ## 🚀 Deployment
 
@@ -352,7 +323,7 @@ CMD ["uv", "run", "gunicorn", "app.main:app", "-c", "gunicorn.conf.py"]
 ```
 
 ### Using systemd (Ubuntu/Debian)
-Create `/etc/systemd/system/faststack.service`:
+Create `/etc/systemd/system/pyfaststack.service`:
 ```ini
 [Unit]
 Description=PyFastStack Web Application
@@ -361,8 +332,8 @@ After=network.target
 [Service]
 Type=exec
 User=www-data
-WorkingDirectory=/path/to/faststack
-Environment="PATH=/path/to/pyfaststack/venv/bin"
+WorkingDirectory=/path/to/pyfaststack
+Environment="PATH=/path/to/pyfaststack/.venv/bin"
 ExecStart=/path/to/pyfaststack/.venv/bin/gunicorn app.main:app -c gunicorn.conf.py
 Restart=always
 
@@ -370,75 +341,46 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## ⚡ Performance Optimizations
-
-- **Fully Async** - Nothing blocks, everything runs fast
-- **Connection Pooling** - Reuses database connections smartly
-- **Indexed Fields** - Common queries run faster
-- **Non-blocking I/O** - Asyncio everywhere
-- **Production Config** - Gunicorn with multiple workers ready to go
-- **High Limits** - 10,000 concurrent connections? No problem
-- **Large Files** - Upload up to 100MB
-- **GZip** - Responses compressed automatically
-
-## 📈 Request Limits and Performance Tuning
-
-### Increased Limits Configuration
-
-PyFastStack can handle serious traffic:
-
-- **Max Request Body Size**: 100MB (configurable)
-- **Max Concurrent Connections**: 10,000
-- **Worker Connections**: 10,000 per worker
-- **Request Timeout**: 120 seconds
-- **Keep-Alive Timeout**: 5 seconds
-- **Max Requests per Worker**: 10,000 before restart
-- **API Pagination Limit**: Up to 10,000 items per page
-
-### Customizing Limits
-
-1. **Gunicorn Configuration** (`gunicorn.conf.py`):
-   - `worker_connections`: Number of simultaneous connections per worker
-   - `max_requests`: Requests before worker restart
-   - `timeout`: Request timeout in seconds
-   - `backlog`: Socket backlog size
-
-2. **Application Level** (`app/main.py`):
-   - Request body size limit in middleware
-   - CORS and compression settings
-
-3. **API Endpoints** (`app/api/v1/endpoints/`):
-   - Pagination limits with Query parameters
-
-### Running with Custom Uvicorn Config
-
-```bash
-# Use custom Uvicorn configuration for development
-uv run python uvicorn_config.py
-```
-
 ### Nginx Configuration
-
-For production deployment behind Nginx, use the provided `nginx.conf.example`:
+For production deployment behind Nginx:
 - Supports 100MB client body size
 - Optimized timeouts and buffers
 - Gzip compression enabled
 - WebSocket support included
 
+## ⚡ Performance Optimizations
+
+- **Fully Async** - Non-blocking operations throughout
+- **Connection Pooling** - Efficient database connection reuse
+- **Indexed Fields** - Optimized database queries
+- **Worker Configuration** - Multi-worker setup for production
+- **Request Pipelining** - Handle multiple requests efficiently
+- **Response Compression** - Automatic GZip compression
+
+### Performance Tuning
+
+1. **Gunicorn Configuration** (`gunicorn.conf.py`):
+   - Workers: CPU cores × 2 + 1
+   - Worker connections: 10,000
+   - Max requests per worker: 10,000
+   - Timeout: 120 seconds
+
+2. **Database Optimization**:
+   - Connection pool size: 5-20 connections
+   - Query optimization with proper indexes
+   - Async operations for all database calls
+
+3. **API Optimization**:
+   - Pagination with configurable limits
+   - Efficient serialization with Pydantic
+   - Minimal overhead on health checks
+
 ## 🏃 Benchmarking
 
-Test the application's performance using the `/health` endpoint:
+Test application performance using the `/health` endpoint:
 
 ```bash
-# Using Apache Bench (ab)
+# Using Apache Bench
 ab -n 10000 -c 100 http://localhost:8000/health
 
 # Using wrk
@@ -448,11 +390,19 @@ wrk -t12 -c400 -d30s http://localhost:8000/health
 hey -n 10000 -c 100 http://localhost:8000/health
 ```
 
-The health endpoint is made for benchmarking:
-- Super fast response
-- No database hits
-- No auth checks
-- Just JSON with timestamp
+The health endpoint is optimized for benchmarking:
+- Minimal processing overhead
+- No database queries
+- No authentication checks
+- Pure JSON response with timestamp
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📝 License
 
@@ -462,7 +412,9 @@ This project is open source and available under the [MIT License](LICENSE).
 
 - Built with [FastAPI](https://fastapi.tiangolo.com/)
 - Styled with [Tailwind CSS](https://tailwindcss.com/)
+- Enhanced with [HTMX](https://htmx.org/)
 - Database ORM by [SQLAlchemy](https://www.sqlalchemy.org/)
+- Rate limiting by [SlowAPI](https://github.com/laurentS/slowapi)
 
 ---
 

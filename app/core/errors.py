@@ -7,8 +7,16 @@ from fastapi import HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from slowapi.errors import RateLimitExceeded
 
 templates = Jinja2Templates(directory="templates")
+
+# Add built-in functions to Jinja2 globals
+templates.env.globals.update({
+    'min': min,
+    'max': max,
+    'range': range
+})
 
 
 def _create_error_response(
@@ -82,4 +90,28 @@ async def general_http_exception_handler(request: Request, exc: StarletteHTTPExc
             "error_detail": exc.detail
         },
         status_code=exc.status_code
+    )
+
+
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    """Handle rate limit exceeded errors with custom page."""
+    # Extract rate limit info from the error message
+    error_string = str(exc.detail)
+    
+    # For API routes, return JSON
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=429,
+            content={"error": error_string}
+        )
+    
+    # For web routes, show custom error page
+    return templates.TemplateResponse(
+        "errors/429.html",
+        {
+            "request": request,
+            "title": "Too Many Requests",
+            "detail": error_string
+        },
+        status_code=429
     )

@@ -2,17 +2,14 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
 from app.api.deps import get_current_active_superuser, get_db
+from app.core.rate_limiter import limiter
 from app.crud import subscription as crud_subscription
 from app.models.user import User
 from app.schemas.subscription import Subscription, SubscriptionCreate
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/subscribe", response_model=Subscription, status_code=status.HTTP_201_CREATED)
@@ -43,7 +40,7 @@ async def subscribe_to_newsletter(
     """
     try:
         # Check if email already exists
-        existing_subscription = await crud_subscription.subscription.get_by_email(
+        existing_subscription = await crud_subscription.get_by_email(
             db, email=subscription_in.email
         )
 
@@ -62,14 +59,14 @@ async def subscribe_to_newsletter(
                     interests=subscription_in.interests,
                     is_active=True
                 )
-                subscription = await crud_subscription.subscription.update(
+                subscription = await crud_subscription.update(
                     db, db_obj=existing_subscription, obj_in=update_data
                 )
                 logger.info(f"Reactivated subscription for email: {subscription_in.email}")
                 return subscription
 
         # Create new subscription
-        subscription = await crud_subscription.subscription.create(db, obj_in=subscription_in)
+        subscription = await crud_subscription.create(db, obj_in=subscription_in)
         logger.info(f"New subscription created for email: {subscription_in.email}")
         return subscription
 
@@ -109,7 +106,7 @@ async def unsubscribe_from_newsletter(
         500: An error occurred while processing your unsubscription
     """
     try:
-        subscription = await crud_subscription.subscription.deactivate_subscription(db, email=email)
+        subscription = await crud_subscription.deactivate_subscription(db, email=email)
 
         if not subscription:
             raise HTTPException(
@@ -159,7 +156,7 @@ async def get_active_subscriptions(
         500: An error occurred while fetching subscriptions
     """
     try:
-        subscriptions = await crud_subscription.subscription.get_active_subscriptions(
+        subscriptions = await crud_subscription.get_active_subscriptions(
             db, skip=skip, limit=limit
         )
         return subscriptions

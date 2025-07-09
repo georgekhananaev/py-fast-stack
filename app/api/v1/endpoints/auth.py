@@ -5,11 +5,9 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
 from app.api import deps
 from app.core.config import get_settings
+from app.core.rate_limiter import limiter
 from app.core.security import create_access_token
 from app.crud import user as crud_user
 from app.db.session import get_db
@@ -20,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 settings = get_settings()
-limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/login", response_model=Token)

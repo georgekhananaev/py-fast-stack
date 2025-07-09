@@ -13,6 +13,7 @@ import time
 import random
 from typing import AsyncGenerator, Generator, Dict, Any
 from httpx import AsyncClient, Response
+from unittest.mock import Mock, patch
 
 # Base URL for the running server
 BASE_URL = "http://localhost:8000"
@@ -23,6 +24,14 @@ ROOT_PASSWORD = os.environ.get("TEST_ROOT_PASSWORD", "RootPassword123!")
 
 # Track created test users for cleanup
 _created_test_users = []
+
+# Flag to control rate limiting in tests
+DISABLE_RATE_LIMIT_FOR_TESTS = os.environ.get("DISABLE_RATE_LIMIT_FOR_TESTS", "true").lower() == "true"
+
+# Track used test user indices
+_used_test_user_indices = set()
+_test_user_lock = asyncio.Lock()
+_last_login_time = 0
 
 
 @pytest.fixture(scope="session")
@@ -73,7 +82,12 @@ async def cleanup_test_users(client: AsyncClient):
 @pytest_asyncio.fixture
 async def client() -> AsyncGenerator[AsyncClient, None]:
     """Create a test client that connects to the running server."""
-    async with AsyncClient(base_url=BASE_URL, follow_redirects=False) as test_client:
+    # Create client with test headers
+    headers = {
+        "User-Agent": "pytest/test-client",
+        "X-Test-Id": f"test_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
+    }
+    async with AsyncClient(base_url=BASE_URL, follow_redirects=False, headers=headers) as test_client:
         yield test_client
         # Cleanup after all tests
         await cleanup_test_users(test_client)
@@ -81,53 +95,136 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
 
 @pytest_asyncio.fixture
 async def test_user(client: AsyncClient) -> dict:
-    """Create a test user via API and return user data."""
-    # Use unique username and email for each test run
-    timestamp = int(time.time() * 1000)
-    rand = random.randint(1000, 9999)
-    username = f"testuser_{timestamp}_{rand}"
-    email = f"test_{timestamp}_{rand}@example.com"
+    """Get a pre-created test user and return user data."""
+    global _used_test_user_indices, _last_login_time
+    
+    async with _test_user_lock:
+        # Add delay between logins to avoid rate limiting
+        current_time = time.time()
+        time_since_last_login = current_time - _last_login_time
+        if time_since_last_login < 0.5:  # Wait at least 0.5 seconds between logins
+            await asyncio.sleep(0.5 - time_since_last_login)
+        
+        # Find an unused test user index
+        for i in range(20):  # We created 20 test users
+            if i not in _used_test_user_indices:
+                _used_test_user_indices.add(i)
+                user_index = i
+                break
+        else:
+            # All users are in use, create a new one with timestamp
+            timestamp = int(time.time() * 1000)
+            rand = random.randint(1000, 9999)
+            username = f"testuser_extra_{timestamp}_{rand}"
+            email = f"test_extra_{timestamp}_{rand}@example.com"
+            password = "TestPassword123!"
+            
+            # Add delay to avoid rate limiting
+            await asyncio.sleep(1)
+            
+            # Create the user
+            response = await client.post(
+                "/api/v1/auth/register",
+                json={
+                    "email": email,
+                    "username": username,
+                    "password": password,
+                    "full_name": "Test User Extra"
+                }
+            )
+            
+            if response.status_code != 200:
+                print(f"Failed to create extra test user: {response.status_code} - {response.text}")
+            
+            assert response.status_code == 200, f"Failed to create test user: {response.text}"
+            
+            user_data = response.json()
+            user_data["password"] = password
+            _created_test_users.append(user_data["id"])
+            
+            # Login to get access token
+            login_response = await client.post(
+                "/api/v1/auth/login",
+                data={"username": username, "password": password}
+            )
+            assert login_response.status_code == 200
+            user_data["access_token"] = login_response.json()["access_token"]
+            
+            return user_data
+    
+    # Use pre-created test user
+    username = f"testuser_{user_index}"
+    email = f"testuser_{user_index}@example.com"
     password = "TestPassword123!"
     
-    # Create the user
-    response = await client.post(
-        "/api/v1/auth/register",
-        json={
-            "email": email,
-            "username": username,
-            "password": password,
-            "full_name": "Test User"
-        }
-    )
-    
-    if response.status_code != 200:
-        # If registration failed, try to get error details
-        print(f"Failed to create test user: {response.status_code} - {response.text}")
-    
-    assert response.status_code == 200, f"Failed to create test user: {response.text}"
-    
-    # Add password to the response for use in tests
-    user_data = response.json()
-    user_data["password"] = password
-    
-    # Track for cleanup
-    _created_test_users.append(user_data["id"])
-    
-    # Login to get access token
+    # Login to get user data and access token
     login_response = await client.post(
         "/api/v1/auth/login",
         data={"username": username, "password": password}
     )
-    assert login_response.status_code == 200
-    user_data["access_token"] = login_response.json()["access_token"]
+    
+    # Update last login time
+    _last_login_time = time.time()
+    
+    if login_response.status_code != 200:
+        print(f"Failed to login as {username}: {login_response.status_code} - {login_response.text}")
+    
+    assert login_response.status_code == 200, f"Failed to login as test user: {login_response.text}"
+    
+    access_token = login_response.json()["access_token"]
+    
+    # Get user info
+    me_response = await client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    assert me_response.status_code == 200
+    
+    user_data = me_response.json()
+    user_data["password"] = password
+    user_data["access_token"] = access_token
     
     return user_data
 
 
 @pytest_asyncio.fixture
 async def test_superuser(client: AsyncClient) -> dict:
-    """Use root user as superuser for tests."""
-    # Login as root
+    """Use pre-created test superuser for tests."""
+    global _last_login_time
+    
+    # Add delay to avoid rate limiting
+    async with _test_user_lock:
+        current_time = time.time()
+        time_since_last_login = current_time - _last_login_time
+        if time_since_last_login < 0.5:
+            await asyncio.sleep(0.5 - time_since_last_login)
+    
+    # Use testsuperuser instead of root to avoid affecting production
+    username = "testsuperuser"
+    password = "TestPassword123!"
+    
+    # Login as testsuperuser
+    response = await client.post(
+        "/api/v1/auth/login",
+        data={"username": username, "password": password}
+    )
+    
+    # Update last login time
+    _last_login_time = time.time()
+    
+    if response.status_code == 200:
+        # Get user info
+        token = response.json()["access_token"]
+        me_response = await client.get(
+            "/api/v1/auth/me",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        user_data = me_response.json()
+        user_data["password"] = password
+        user_data["access_token"] = token
+        return user_data
+    
+    # If testsuperuser login failed, try root as fallback
     response = await client.post(
         "/api/v1/auth/login",
         data={"username": "root", "password": ROOT_PASSWORD}
@@ -142,10 +239,11 @@ async def test_superuser(client: AsyncClient) -> dict:
         )
         user_data = me_response.json()
         user_data["password"] = ROOT_PASSWORD
+        user_data["access_token"] = token
         return user_data
     
-    # If root login failed, skip tests
-    pytest.skip(f"Root login failed: {response.text}")
+    # If both failed, skip tests
+    pytest.skip(f"Superuser login failed: {response.text}")
 
 
 @pytest_asyncio.fixture
@@ -162,17 +260,39 @@ async def auth_headers(client: AsyncClient, test_user: dict) -> dict:
 
 @pytest_asyncio.fixture
 async def superuser_auth_headers(client: AsyncClient) -> dict:
-    """Get authentication headers for a superuser (root user)."""
-    if not ROOT_PASSWORD:
-        pytest.skip("Root password not available, skipping superuser tests")
+    """Get authentication headers for a superuser."""
+    global _last_login_time
     
-    # Use the root user credentials
+    # Add delay to avoid rate limiting
+    async with _test_user_lock:
+        current_time = time.time()
+        time_since_last_login = current_time - _last_login_time
+        if time_since_last_login < 0.5:
+            await asyncio.sleep(0.5 - time_since_last_login)
+    
+    # Use testsuperuser first
+    response = await client.post(
+        "/api/v1/auth/login",
+        data={"username": "testsuperuser", "password": "TestPassword123!"}
+    )
+    
+    # Update last login time
+    _last_login_time = time.time()
+    
+    if response.status_code == 200:
+        token = response.json()["access_token"]
+        return {"Authorization": f"Bearer {token}"}
+    
+    # Fallback to root if testsuperuser fails
+    if not ROOT_PASSWORD:
+        pytest.skip("Superuser login failed and root password not available")
+    
     response = await client.post(
         "/api/v1/auth/login",
         data={"username": "root", "password": ROOT_PASSWORD}
     )
     if response.status_code != 200:
-        pytest.skip(f"Root login failed: {response.text}")
+        pytest.skip(f"Superuser login failed: {response.text}")
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
 
@@ -180,6 +300,9 @@ async def superuser_auth_headers(client: AsyncClient) -> dict:
 @pytest_asyncio.fixture
 async def auth_cookies(client: AsyncClient, test_user: dict) -> dict:
     """Get authentication cookies for web route testing."""
+    # Add delay to avoid rate limiting
+    await asyncio.sleep(0.5)
+    
     # Login via web form to get cookie
     response = await client.post(
         "/login",
@@ -208,10 +331,26 @@ async def auth_cookies(client: AsyncClient, test_user: dict) -> dict:
 @pytest_asyncio.fixture
 async def superuser_cookies(client: AsyncClient) -> dict:
     """Get authentication cookies for superuser web route testing."""
-    if not ROOT_PASSWORD:
-        pytest.skip("Root password not available, skipping superuser tests")
+    # Try testsuperuser first
+    response = await client.post(
+        "/login",
+        data={
+            "username": "testsuperuser",
+            "password": "TestPassword123!"
+        }
+    )
     
-    # Login as root via web form
+    if response.status_code == 302:
+        # Extract the access token from cookies
+        cookies = response.cookies
+        access_token = cookies.get("access_token")
+        assert access_token is not None, "No access token in cookies"
+        return {"access_token": access_token}
+    
+    # Fallback to root
+    if not ROOT_PASSWORD:
+        pytest.skip("Superuser login failed and root password not available")
+    
     response = await client.post(
         "/login",
         data={
@@ -220,7 +359,7 @@ async def superuser_cookies(client: AsyncClient) -> dict:
         }
     )
     if response.status_code != 302:
-        pytest.skip(f"Root login failed: {response.text}")
+        pytest.skip(f"Superuser login failed: {response.text}")
     
     # Extract the access token from cookies
     cookies = response.cookies
@@ -237,7 +376,7 @@ async def test_user_for_deletion(client: AsyncClient) -> dict:
     rand = random.randint(1000, 9999)
     username = f"deleteme_{timestamp}_{rand}"
     email = f"deleteme_{timestamp}_{rand}@example.com"
-    password = "deletepass123"
+    password = "DeletePass123!"
     
     # Create the user
     response = await client.post(

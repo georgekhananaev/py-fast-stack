@@ -9,10 +9,8 @@ from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
 from app.core.auth_dependencies import get_optional_current_user
+from app.core.rate_limiter import limiter
 from app.core.config import get_settings
 from app.core.security import create_access_token
 from app.crud import user as crud_user
@@ -23,7 +21,13 @@ from app.schemas.user import UserCreate
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 settings = get_settings()
-limiter = Limiter(key_func=get_remote_address)
+
+# Add built-in functions to Jinja2 globals
+templates.env.globals.update({
+    'min': min,
+    'max': max,
+    'range': range
+})
 
 
 @router.get("/", response_class=HTMLResponse)

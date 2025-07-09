@@ -15,17 +15,17 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from slowapi import _rate_limit_exceeded_handler, Limiter
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 
 from app.api.v1.api import api_router
+from app.core.rate_limiter import limiter
 from app.core.config import get_settings
 from app.core.errors import (
     forbidden_handler,
     general_http_exception_handler,
     internal_server_error_handler,
     not_found_handler,
+    rate_limit_handler,
 )
 from app.core.middleware import PerformanceMiddleware, RequestSizeLimitMiddleware
 from app.db.base import Base
@@ -128,9 +128,8 @@ app.add_exception_handler(500, internal_server_error_handler)
 app.add_exception_handler(Exception, internal_server_error_handler)
 
 # Initialize rate limiter
-limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, rate_limit_handler)
 
 
 @app.get("/health")

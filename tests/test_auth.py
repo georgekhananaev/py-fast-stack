@@ -7,6 +7,7 @@ https://george.khananaev.com/
 import pytest
 import time
 import random
+import asyncio
 from httpx import AsyncClient
 
 
@@ -16,6 +17,9 @@ class TestAuthentication:
     @pytest.mark.asyncio
     async def test_register_user(self, client: AsyncClient):
         """Test user registration."""
+        # Add small delay to avoid rate limiting from previous tests
+        await asyncio.sleep(0.5)
+        
         timestamp = int(time.time() * 1000)
         rand = random.randint(1000, 9999)
         email = f"register_{timestamp}_{rand}@example.com"
@@ -41,6 +45,9 @@ class TestAuthentication:
     @pytest.mark.asyncio
     async def test_register_duplicate_email(self, client: AsyncClient, test_user: dict):
         """Test registration with duplicate email."""
+        # Add small delay to avoid rate limiting
+        await asyncio.sleep(0.5)
+        
         timestamp = int(time.time() * 1000)
         response = await client.post(
             "/api/v1/auth/register",
@@ -59,6 +66,9 @@ class TestAuthentication:
     @pytest.mark.asyncio
     async def test_register_duplicate_username(self, client: AsyncClient, test_user: dict):
         """Test registration with duplicate username."""
+        # Add small delay to avoid rate limiting
+        await asyncio.sleep(0.5)
+        
         timestamp = int(time.time() * 1000)
         response = await client.post(
             "/api/v1/auth/register",
@@ -77,6 +87,9 @@ class TestAuthentication:
     @pytest.mark.asyncio
     async def test_login_success(self, client: AsyncClient, test_user: dict):
         """Test successful login."""
+        # Add small delay to avoid rate limiting
+        await asyncio.sleep(0.5)
+        
         response = await client.post(
             "/api/v1/auth/login",
             data={
@@ -92,6 +105,9 @@ class TestAuthentication:
     @pytest.mark.asyncio
     async def test_login_wrong_password(self, client: AsyncClient, test_user: dict):
         """Test login with wrong password."""
+        # Add small delay to avoid rate limiting
+        await asyncio.sleep(0.5)
+        
         response = await client.post(
             "/api/v1/auth/login",
             data={
@@ -105,6 +121,9 @@ class TestAuthentication:
     @pytest.mark.asyncio
     async def test_login_nonexistent_user(self, client: AsyncClient):
         """Test login with non-existent user."""
+        # Add small delay to avoid rate limiting
+        await asyncio.sleep(0.5)
+        
         timestamp = int(time.time() * 1000)
         response = await client.post(
             "/api/v1/auth/login",
@@ -119,12 +138,15 @@ class TestAuthentication:
     @pytest.mark.asyncio
     async def test_login_inactive_user(self, client: AsyncClient, superuser_auth_headers: dict):
         """Test login with inactive user."""
+        # Add small delay to avoid rate limiting
+        await asyncio.sleep(0.5)
+        
         # Create a test user first
         timestamp = int(time.time() * 1000)
         rand = random.randint(1000, 9999)
         username = f"inactive_{timestamp}_{rand}"
         email = f"inactive_{timestamp}_{rand}@example.com"
-        password = "inactivepass123"
+        password = "InactivePass123!"
         
         # Create user
         response = await client.post(
@@ -148,6 +170,9 @@ class TestAuthentication:
             }
         )
         assert response.status_code == 200
+        
+        # Add delay before login attempt
+        await asyncio.sleep(0.5)
         
         # Try to login with inactive user
         response = await client.post(

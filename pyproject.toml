@@ -116,3 +116,16 @@ include = '\.pyi?$'
 
 [tool.uv]
 compile-bytecode = true
+
+[tool.pytest.ini_options]
+addopts = "-p no:warnings"
+markers = [
+    "rate_limit: marks tests as rate limit tests (deselect with '-m \"not rate_limit\"')",
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

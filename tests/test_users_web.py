@@ -7,6 +7,7 @@ These tests are for web routes that expect cookies and form data.
 """
 
 import pytest
+import asyncio
 from httpx import AsyncClient
 
 
@@ -87,6 +88,9 @@ class TestWebUserOperations:
         auth_cookies: dict
     ):
         """Test password change via web route."""
+        # Add delay to avoid rate limiting
+        await asyncio.sleep(0.5)
+        
         # Change password
         response = await client.post(
             "/profile/password",
@@ -99,6 +103,9 @@ class TestWebUserOperations:
         )
         assert response.status_code == 302  # Redirect after successful password change
         
+        # Add delay between login attempts
+        await asyncio.sleep(0.5)
+        
         # Verify the old password no longer works
         old_login_response = await client.post(
             "/login",
@@ -108,6 +115,9 @@ class TestWebUserOperations:
             }
         )
         assert old_login_response.status_code == 401
+        
+        # Add delay between login attempts
+        await asyncio.sleep(0.5)
         
         # Verify the new password works
         new_login_response = await client.post(

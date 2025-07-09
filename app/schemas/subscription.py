@@ -34,6 +34,18 @@ class SubscriptionUpdate(InterestsValidatorMixin, BaseModel):
     company: str | None = None
     interests: list[str] | None = None
     is_active: bool | None = None
+    
+    @field_validator('interests', mode='before')
+    def parse_interests_before_validation(cls, v) -> list[str] | None:
+        """Parse interests JSON string back to list before validation."""
+        if v is None or v == "":
+            return None
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return None
+        return v
 
 
 class SubscriptionInDB(SubscriptionBase):
