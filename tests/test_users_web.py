@@ -92,8 +92,8 @@ class TestWebUserOperations:
             "/profile/password",
             data={
                 "current_password": test_user["password"],
-                "new_password": "newpassword123",
-                "confirm_new_password": "newpassword123"
+                "new_password": "NewPassword123!",
+                "confirm_new_password": "NewPassword123!"
             },
             cookies=auth_cookies
         )
@@ -114,7 +114,7 @@ class TestWebUserOperations:
             "/login",
             data={
                 "username": test_user["username"],
-                "password": "newpassword123"
+                "password": "NewPassword123!"
             }
         )
         assert new_login_response.status_code == 302  # Redirect after successful login
@@ -130,9 +130,9 @@ class TestWebUserOperations:
         response = await client.post(
             "/profile/password",
             data={
-                "current_password": "wrongpassword",
-                "new_password": "newpassword123",
-                "confirm_new_password": "newpassword123"
+                "current_password": "WrongPassword123!",
+                "new_password": "NewPassword123!",
+                "confirm_new_password": "NewPassword123!"
             },
             cookies=auth_cookies
         )
@@ -151,8 +151,8 @@ class TestWebUserOperations:
             "/profile/password",
             data={
                 "current_password": test_user["password"],
-                "new_password": "newpassword123",
-                "confirm_new_password": "differentpassword123"
+                "new_password": "NewPassword123!",
+                "confirm_new_password": "DifferentPassword123!"
             },
             cookies=auth_cookies
         )

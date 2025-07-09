@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 
 class InterestsValidatorMixin:

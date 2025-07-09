@@ -1,0 +1,120 @@
+<!-- Reusable Component Macros -->
+
+{% macro search_bar(action_url, search_value='', placeholder_text='Search...') %}
+<div class="mt-6">
+    <form id="searchForm" method="get" action="{{ action_url }}" class="flex gap-4">
+        <div class="flex-1 max-w-lg">
+            <label for="search" class="sr-only">Search</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <input type="text" name="search" id="search" value="{{ search_value }}" 
+                       class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                       placeholder="{{ placeholder_text }}">
+            </div>
+        </div>
+        <button type="submit" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-md transition-colors">
+            Search
+        </button>
+        {% if search_value %}
+        <a href="{{ action_url }}" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-md transition-colors">
+            Clear
+        </a>
+        {% endif %}
+    </form>
+</div>
+{% endmacro %}
+
+{% macro table_header(column_name, display_name, sort_url_func, current_sort_by, current_sort_order, first=False) %}
+<th scope="col" class="py-3.5 {% if first %}pl-4 pr-3 sm:pl-6{% else %}px-3{% endif %} text-left text-sm font-semibold text-gray-900 dark:text-white">
+    <a href="{{ sort_url_func(column_name) }}" class="group inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400">
+        {{ display_name }}
+        {% if current_sort_by == column_name %}
+            {% if current_sort_order == 'asc' %}
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
+            </svg>
+            {% else %}
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path>
+            </svg>
+            {% endif %}
+        {% else %}
+        <svg class="invisible group-hover:visible h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
+        </svg>
+        {% endif %}
+    </a>
+</th>
+{% endmacro %}
+
+{% macro pagination(current_page, total_pages, total_items, items_per_page, pagination_url_func) %}
+{% if total_pages > 1 %}
+<div class="mt-6 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 sm:px-6 rounded-b-lg">
+    <div class="flex flex-1 justify-between sm:hidden">
+        {% if current_page > 1 %}
+        <a href="{{ pagination_url_func(current_page - 1) }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+            Previous
+        </a>
+        {% endif %}
+        {% if current_page < total_pages %}
+        <a href="{{ pagination_url_func(current_page + 1) }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+            Next
+        </a>
+        {% endif %}
+    </div>
+    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div>
+            <p class="text-sm text-gray-700 dark:text-gray-300">
+                Showing
+                <span class="font-medium">{{ (current_page - 1) * items_per_page + 1 }}</span>
+                to
+                <span class="font-medium">{{ min(current_page * items_per_page, total_items) }}</span>
+                of
+                <span class="font-medium">{{ total_items }}</span>
+                results
+            </p>
+        </div>
+        <div>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                {% set page_start = max(1, current_page - 2) %}
+                {% set page_end = min(total_pages, current_page + 2) %}
+                
+                {% if current_page > 1 %}
+                <a href="{{ pagination_url_func(1) }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    First
+                </a>
+                <a href="{{ pagination_url_func(current_page - 1) }}" class="relative inline-flex items-center px-2 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    Previous
+                </a>
+                {% endif %}
+                
+                {% for page in range(page_start, page_end + 1) %}
+                <a href="{{ pagination_url_func(page) }}" 
+                   class="relative inline-flex items-center px-4 py-2 border text-sm font-medium
+                          {% if page == current_page %}
+                          z-10 bg-primary-50 dark:bg-primary-900 border-primary-500 text-primary-600 dark:text-primary-400
+                          {% else %}
+                          border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700
+                          {% endif %}">
+                    {{ page }}
+                </a>
+                {% endfor %}
+                
+                {% if current_page < total_pages %}
+                <a href="{{ pagination_url_func(current_page + 1) }}" class="relative inline-flex items-center px-2 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    Next
+                </a>
+                <a href="{{ pagination_url_func(total_pages) }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    Last
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endmacro %}

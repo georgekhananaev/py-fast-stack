@@ -7,15 +7,18 @@ from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
-from app.core.security import verify_password, verify_token
 from app.core.auth_dependencies import get_current_user_from_cookie
+from app.core.security import verify_password
 from app.crud import user as crud_user
 from app.db.session import get_db
 from app.schemas.user import UserUpdate
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+limiter = Limiter(key_func=get_remote_address)
 
 
 # Authentication is handled manually in each endpoint to properly handle redirects
@@ -130,6 +133,7 @@ async def update_profile(
 
 
 @router.post("/profile/password")
+@limiter.limit("3/minute")
 async def change_password(
     request: Request,
     current_password: str = Form(...),

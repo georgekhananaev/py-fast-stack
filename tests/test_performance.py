@@ -149,7 +149,7 @@ class TestPerformance:
                 json={
                     "email": f"perf{user_id}@example.com",
                     "username": f"perfuser{user_id}",
-                    "password": "perfpass123",
+                    "password": "PerfPassword123!",
                     "full_name": "Performance Test User"
                 }
             )
@@ -162,7 +162,7 @@ class TestPerformance:
                 "/api/v1/auth/login",
                 data={
                     "username": f"perfuser{user_id}",
-                    "password": "perfpass123"
+                    "password": "PerfPassword123!"
                 }
             )
             assert response.status_code == 200

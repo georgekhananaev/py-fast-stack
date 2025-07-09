@@ -19,7 +19,7 @@ BASE_URL = "http://localhost:8000"
 
 # Default root password for testing
 # In production, this should be set via environment variable
-ROOT_PASSWORD = os.environ.get("TEST_ROOT_PASSWORD", "root123")
+ROOT_PASSWORD = os.environ.get("TEST_ROOT_PASSWORD", "RootPassword123!")
 
 # Track created test users for cleanup
 _created_test_users = []
@@ -87,7 +87,7 @@ async def test_user(client: AsyncClient) -> dict:
     rand = random.randint(1000, 9999)
     username = f"testuser_{timestamp}_{rand}"
     email = f"test_{timestamp}_{rand}@example.com"
-    password = "testpass123"
+    password = "TestPassword123!"
     
     # Create the user
     response = await client.post(

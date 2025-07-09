@@ -1,9 +1,12 @@
+import logging
 from datetime import timedelta
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.api import deps
 from app.core.config import get_settings
@@ -13,12 +16,17 @@ from app.db.session import get_db
 from app.schemas.token import Token
 from app.schemas.user import User, UserCreate
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 settings = get_settings()
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/login", response_model=Token)
+@limiter.limit("5/minute")
 async def login(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
@@ -44,6 +52,12 @@ async def login(
         db, username=form_data.username, password=form_data.password
     )
     if not user:
+        # Log failed login attempt
+        client_host = getattr(request.client, 'host', 'unknown') if request.client else 'unknown'
+        logger.warning(
+            f"Failed login attempt for username: {form_data.username} "
+            f"from IP: {client_host}"
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -56,11 +70,21 @@ async def login(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
+
+    # Log successful login
+    client_host = getattr(request.client, 'host', 'unknown') if request.client else 'unknown'
+    logger.info(
+        f"Successful login for user: {user.username} "
+        f"from IP: {client_host}"
+    )
+
     return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/register", response_model=User)
+@limiter.limit("3/minute")
 async def register(
+    request: Request,
     *,
     db: AsyncSession = Depends(get_db),
     user_in: UserCreate,
@@ -98,6 +122,14 @@ async def register(
         )
 
     user = await crud_user.create(db, obj_in=user_in)
+
+    # Log successful registration
+    client_host = getattr(request.client, 'host', 'unknown') if request.client else 'unknown'
+    logger.info(
+        f"New user registered: {user.username} ({user.email}) "
+        f"from IP: {client_host}"
+    )
+
     return user
 
 

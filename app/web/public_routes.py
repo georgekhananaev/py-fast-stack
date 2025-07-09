@@ -9,18 +9,21 @@ from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
+from app.core.auth_dependencies import get_optional_current_user
 from app.core.config import get_settings
 from app.core.security import create_access_token
-from app.core.auth_dependencies import get_optional_current_user
 from app.crud import user as crud_user
 from app.db.session import get_db
-from app.schemas.user import UserCreate
 from app.models.user import User
+from app.schemas.user import UserCreate
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 settings = get_settings()
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -65,7 +68,7 @@ async def login_page(
     # If user is already logged in, redirect to dashboard
     if current_user:
         return RedirectResponse(url="/dashboard", status_code=302)
-    
+
     return templates.TemplateResponse(
         "auth/login.html",
         {"request": request, "title": "Login", "user": current_user}
@@ -73,6 +76,7 @@ async def login_page(
 
 
 @router.post("/login")
+@limiter.limit("5/minute")
 async def login(
     request: Request,
     username: str = Form(...),
@@ -124,8 +128,9 @@ async def login(
         key="access_token",
         value=access_token,
         httponly=True,
+        secure=not settings.debug,  # Secure in production
         max_age=settings.access_token_expire_minutes * 60,
-        samesite="lax"
+        samesite="strict"
     )
     return response
 
@@ -150,7 +155,7 @@ async def register_page(
     # If user is already logged in, redirect to dashboard
     if current_user:
         return RedirectResponse(url="/dashboard", status_code=302)
-    
+
     return templates.TemplateResponse(
         "auth/register.html",
         {"request": request, "title": "Register", "user": current_user}
@@ -158,6 +163,7 @@ async def register_page(
 
 
 @router.post("/register")
+@limiter.limit("3/minute")
 async def register(
     request: Request,
     email: str = Form(...),
@@ -223,8 +229,9 @@ async def register(
         key="access_token",
         value=access_token,
         httponly=True,
+        secure=not settings.debug,  # Secure in production
         max_age=settings.access_token_expire_minutes * 60,
-        samesite="lax"
+        samesite="strict"
     )
     return response
 

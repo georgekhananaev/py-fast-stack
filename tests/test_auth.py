@@ -26,7 +26,7 @@ class TestAuthentication:
             json={
                 "email": email,
                 "username": username,
-                "password": "registerpass123",
+                "password": "RegisterPass123!",
                 "full_name": "Register Test"
             }
         )
@@ -47,7 +47,7 @@ class TestAuthentication:
             json={
                 "email": test_user["email"],
                 "username": f"anotheruser_{timestamp}",
-                "password": "pass1234",
+                "password": "TestPassword123!",
                 "full_name": "Another User"
             }
         )
@@ -65,7 +65,7 @@ class TestAuthentication:
             json={
                 "email": f"another_{timestamp}@example.com",
                 "username": test_user["username"],
-                "password": "pass1234",
+                "password": "TestPassword123!",
                 "full_name": "Another User"
             }
         )
@@ -96,7 +96,7 @@ class TestAuthentication:
             "/api/v1/auth/login",
             data={
                 "username": test_user["username"],
-                "password": "wrongpassword"
+                "password": "WrongPassword123!"
             }
         )
         assert response.status_code in [400, 401]  # Accept either
@@ -110,7 +110,7 @@ class TestAuthentication:
             "/api/v1/auth/login",
             data={
                 "username": f"nonexistent_{timestamp}",
-                "password": "password123"
+                "password": "NonExistentPass123!"
             }
         )
         assert response.status_code in [400, 401]  # Accept either

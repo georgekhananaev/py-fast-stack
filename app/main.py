@@ -4,9 +4,9 @@ Created by George Khananaev
 https://george.khananaev.com/
 """
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
-from typing import AsyncGenerator
+from datetime import UTC, datetime
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +14,10 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+
+from slowapi import _rate_limit_exceeded_handler, Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from app.api.v1.api import api_router
 from app.core.config import get_settings
@@ -32,7 +36,7 @@ settings = get_settings()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Handle application lifespan events."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -64,13 +68,29 @@ app = FastAPI(
     max_request_size=100 * 1024 * 1024,  # 100 MB
 )
 
+# Security headers middleware
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+
+    # Only add HSTS in production
+    if not settings.debug:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+
+    return response
+
 # Add middlewares in reverse order (last added is executed first)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
 # Add GZip compression for responses
@@ -85,7 +105,7 @@ app.add_middleware(PerformanceMiddleware)
 # Add trusted host middleware for security
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["*"],  # Configure this for production
+    allowed_hosts=settings.allowed_hosts,
 )
 
 # Mount static files
@@ -107,6 +127,11 @@ app.add_exception_handler(403, forbidden_handler)
 app.add_exception_handler(500, internal_server_error_handler)
 app.add_exception_handler(Exception, internal_server_error_handler)
 
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 
 @app.get("/health")
 async def health():
@@ -124,6 +149,6 @@ async def health():
     """
     return {
         "status": "healthy",
-        "datetime": datetime.now(timezone.utc).isoformat(),
-        "timestamp": datetime.now(timezone.utc).timestamp()
+        "datetime": datetime.now(UTC).isoformat(),
+        "timestamp": datetime.now(UTC).timestamp()
     }

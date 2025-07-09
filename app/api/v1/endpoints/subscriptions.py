@@ -1,7 +1,9 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.api.deps import get_current_active_superuser, get_db
 from app.crud import subscription as crud_subscription
@@ -10,10 +12,13 @@ from app.schemas.subscription import Subscription, SubscriptionCreate
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/subscribe", response_model=Subscription, status_code=status.HTTP_201_CREATED)
+@limiter.limit("3/minute")
 async def subscribe_to_newsletter(
+    request: Request,
     subscription_in: SubscriptionCreate,
     db: AsyncSession = Depends(get_db)
 ):
@@ -79,7 +84,9 @@ async def subscribe_to_newsletter(
 
 
 @router.delete("/unsubscribe/{email}")
+@limiter.limit("3/minute")
 async def unsubscribe_from_newsletter(
+    request: Request,
     email: str,
     db: AsyncSession = Depends(get_db)
 ):
